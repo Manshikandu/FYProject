@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
+
 import ConnectMongoDb from "./db/ConnectMongoDb.js";
 import artistRoutes from "./routes/Artist.route.js"
 dotenv.config();
@@ -17,14 +17,10 @@ app.get("/", (req,res) => {
     res.send("Server is ready");
 });
 
-
+app.use("/api/auth", authRoutes);
 
 app.listen(PORT, () => {
     console.log("Server is running on http://localhost " + PORT);
     ConnectMongoDb();
 })
 
-    // "test": "echo \"Error: no test specified\" && exit 1"
-
-
-    // console.log("Server is running")
