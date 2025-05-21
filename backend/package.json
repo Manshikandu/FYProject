@@ -1,0 +1,20 @@
+{
+  "name": "fyproject",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Manshikandu/FYProject.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Manshikandu/FYProject/issues"
+  },
+  "homepage": "https://github.com/Manshikandu/FYProject#readme"
+}
