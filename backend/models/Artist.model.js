@@ -35,7 +35,13 @@ const artistSchema = new mongoose.Schema({
     portfolioLinks: [String],
 
     availability: [String],
-
+    media:
+    [
+        {
+            url: String,
+            type: String
+        }
+    ],
     ratings:
     {
         type: Number,
