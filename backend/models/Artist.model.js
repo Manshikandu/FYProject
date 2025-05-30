@@ -54,8 +54,7 @@ const artistSchema = new mongoose.Schema({
             comment: String,
             rating: Number 
         }
-    ],
-    
+    ],   
 },
 {timestamps: true});
 
