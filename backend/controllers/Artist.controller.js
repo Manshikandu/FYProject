@@ -1,29 +1,38 @@
 import Artist from "../models/Artist.model.js";
 import mongoose from "mongoose";
 
-//Create Artist Profile.
-export const CreateOrUpdateArtist = async(req, res) => 
-{
-    let { userId, name, category, style,location, bio, portfolioLinks, availability} = req.body;
+//Update Artist Profile.
+export const UpdateArtist = async(req, res) => 
+{   
+    const userId = req.params.id;
+    let { name, category, style,location, bio, portfolioLinks, availability} = req.body;
 
     if (!userId)
     {
-        userId = new mongoose.Types.ObjectId();
+        // userId = new mongoose.Types.ObjectId();
+        return res.status(400).json({error: 'Missing userId'});
     }
     try
     {
-        let artist = await Artist.findOne({userId});
+        let artist = await Artist.findOne({userId: new mongoose.Types.ObjectId(userId)});
 
-        if(artist)
+        if(!artist)
         {
-            artist.set({name, category, style, location, bio, portfolioLinks, availability });
-            await artist.save();
-            return res.json({message: 'Updated', artist});
+            // artist.set({name, category, style, location, bio, portfolioLinks, availability });
+            // await artist.save();
+            // return res.json({message: 'Updated', artist});
+
+            return res.status(404).json({message: 'Artist profile not found.'});
         }
 
-        const newArtist =  new Artist({userId, name, category, style, location, bio, portfolioLinks, availability});
-        await newArtist.save();
-        res.status(201).json({message: 'Created', artist: newArtist});
+        // const newArtist =  new Artist({userId, name, category, style, location, bio, portfolioLinks, availability});
+        // await newArtist.save();
+        // res.status(201).json({message: 'Created', artist: newArtist});
+
+        artist.set({name,category,style,location,bio,portfoliolinks,availability});
+        await artist.save();
+
+        res.json({message: 'Artist profile updated successfully.', artist});
     }catch(error)
     {
         res.status(500).json({error: 'Server error', details: error.message});
@@ -116,4 +125,9 @@ export const Updateavailability = async(req,res) =>
         res.status(500).json({message: "Server error", error: error.message});
     }
 };
+
+export const bookings =  async(req, res) =>
+{
+    
+}
 

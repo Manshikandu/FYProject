@@ -46,6 +46,38 @@ const userSchema = new mongoose.Schema({
         required: function () {
         return this.role === "artist";
         }
+    },
+    style:
+    {
+        type: String
+    },
+    bio:
+    {
+        type: String
+    },
+    portfolioLinks: [String],
+
+    availability: [String],
+    media:
+    [
+        {
+            url: String,
+            type: String
+        }
+    ],
+    ratings:
+    {
+        type: Number,
+        default: 0
+    },
+    reviews:
+    [
+        {
+            userId: String, 
+            comment: String,
+            rating: Number 
+        }
+    ],
     }
 },{
     timestamps: true
