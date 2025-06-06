@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import Artist from "../models/Artist.model.js";
+
 import jwt from "jsonwebtoken";
 import redis from "../lib/redis.js";
 

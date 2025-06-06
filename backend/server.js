@@ -1,11 +1,15 @@
 import express from "express";
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
+import cookieParser from 'cookie-parser';
+
 import ConnectMongoDb from "./db/ConnectMongoDb.js";
+
 import artistRoutes from "./routes/Artist.route.js"
 
 import authRoutes from "./routes/auth.route.js";
 import bookingRoutes from "./routes/Artist.Booking.route.js";
+import authRoutes from "./routes/auth.route.js";
+
 
 dotenv.config();
 
@@ -13,14 +17,10 @@ const app = express();
 const PORT = process.env.PORT
 
 app.use(express.json());
+app.use(cookieParser());
+
 app.use("/api/artist", artistRoutes);
-
-console.log(process.env.MONGO_URI);
-
-app.get("/", (req,res) => {
-    res.send("Server is ready");
-});
-
+app.use("/api/auth", authRoutes);
 
 
 app.use("/api/auth", authRoutes);

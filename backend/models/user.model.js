@@ -78,6 +78,7 @@ const userSchema = new mongoose.Schema({
             rating: Number 
         }
     ],
+    }
 },{
     timestamps: true
 });
