@@ -1,4 +1,6 @@
 import User from "../models/user.model.js";
+import Artist from "../models/Artist.model.js";
+
 import jwt from "jsonwebtoken";
 import redis from "../lib/redis.js";
 
@@ -92,6 +94,19 @@ export const artistSignup = async (req, res) => {
     });
     user.confirmPassword = confirmPassword;
     await user.save();
+
+    const newArtist = new Artist ({
+      user: user._id,   //Link to the User model
+      username,
+      location,
+      category,
+      bio: "",          // can be updated later
+      style: "",
+      portfolioLinks: [],
+      availability: [],
+    })
+    await newArtist.save();
+    
 
     const { accessToken, refreshToken } = generateTokens(user._id);
     await storeRefreshToken(user._id, refreshToken);
