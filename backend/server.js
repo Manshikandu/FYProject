@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import ConnectMongoDb from "./db/ConnectMongoDb.js";
 import artistRoutes from "./routes/Artist.route.js"
+
+import authRoutes from "./routes/auth.route.js";
+import bookingRoutes from "./routes/Artist.Booking.route.js";
+
 dotenv.config();
 
 const app = express();
@@ -19,12 +23,12 @@ app.get("/", (req,res) => {
 
 
 
+app.use("/api/auth", authRoutes);
+app.use("/api/bookings", bookingRoutes);
+
+
 app.listen(PORT, () => {
     console.log("Server is running on http://localhost " + PORT);
     ConnectMongoDb();
 })
 
-    // "test": "echo \"Error: no test specified\" && exit 1"
-
-
-    // console.log("Server is running")

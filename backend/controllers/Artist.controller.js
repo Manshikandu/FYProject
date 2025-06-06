@@ -5,8 +5,8 @@ import mongoose from "mongoose";
 export const UpdateArtist = async(req, res) => 
 {   
     const userId = req.params.id;
-    let { name, category, style,location, bio, portfolioLinks, availability} = req.body;
-
+    // let { username,category, style,location, bio, portfolioLinks, availability} = req.body;
+    const updateFields = req.body;
     if (!userId)
     {
         // userId = new mongoose.Types.ObjectId();
@@ -14,22 +14,25 @@ export const UpdateArtist = async(req, res) =>
     }
     try
     {
-        let artist = await Artist.findOne({userId: new mongoose.Types.ObjectId(userId)});
+        let artist = await Artist.findOne({ user: new mongoose.Types.ObjectId(userId) });
 
         if(!artist)
         {
-            // artist.set({name, category, style, location, bio, portfolioLinks, availability });
+            // artist.set({username, category, style, location, bio, portfolioLinks, availability });
             // await artist.save();
             // return res.json({message: 'Updated', artist});
 
             return res.status(404).json({message: 'Artist profile not found.'});
         }
 
-        // const newArtist =  new Artist({userId, name, category, style, location, bio, portfolioLinks, availability});
+        // const newArtist =  new Artist({userId, username, category, style, location, bio, portfolioLinks, availability});
         // await newArtist.save();
         // res.status(201).json({message: 'Created', artist: newArtist});
 
-        artist.set({name,category,style,location,bio,portfoliolinks,availability});
+        // artist.set({username,category,style,location,bio,portfolioLinks,availability});
+        Object.keys(updateFields).forEach((key) => {
+            artist[key] = updateFields[key];
+        });
         await artist.save();
 
         res.json({message: 'Artist profile updated successfully.', artist});
@@ -126,8 +129,5 @@ export const Updateavailability = async(req,res) =>
     }
 };
 
-export const bookings =  async(req, res) =>
-{
-    
-}
+
 
