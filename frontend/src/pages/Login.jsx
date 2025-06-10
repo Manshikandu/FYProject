@@ -1,16 +1,3 @@
-// import React from 'react'
-
-// const Login = () => {
-//   return (
-//     <div>
-//       hello loginpage
-//     </div>
-//   )
-// }
-
-// export default Login
-
-//import React from 'react'
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
