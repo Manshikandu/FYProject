@@ -1,21 +1,19 @@
 import express from 'express';
 import Artist from '../models/Artist.model.js';
-import { CreateOrUpdateArtist } from '../controllers/Artist.controller.js';
+import {UpdateArtist,
+        ArtistProfile,
+        upload,
+        availability,
+        Updateavailability
+     } from '../controllers/Artist.controller.js';
 const router = express.Router();
 
-router.post('/create', CreateOrUpdateArtist);
+router.put('/update/:id', UpdateArtist);   //Update Artist Profile
+router.get('/:id', ArtistProfile);   //get Artist profile by ID.
+router.post('/upload-media', upload);   //Artist to upload media
 
-router.get('/:id', async(req, res) => {
-    try{
-        const artist = await Artist.findById(req.params.id);
-        if(!artist)
-            return res.status(404).json({error: 'Not found'});
-        res.json(artist);
-    }
-    catch(error)
-    {
-        res.status(500).json({error: 'Fetch error'});
-    }
-});
+router.get('/:id/availability', availability);  //fetch availability
+router.put('/:id/availability', Updateavailability);  //Update availability
+
 
 export default router;
