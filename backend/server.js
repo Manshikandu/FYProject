@@ -9,8 +9,6 @@ import artistRoutes from "./routes/Artist.route.js"
 
 import authRoutes from "./routes/auth.route.js";
 import bookingRoutes from "./routes/Artist.Booking.route.js";
-import authRoutes from "./routes/auth.route.js";
-
 
 dotenv.config();
 
@@ -28,9 +26,6 @@ app.use(cors({
 
 
 app.use("/api/artist", artistRoutes);
-app.use("/api/auth", authRoutes);
-
-
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 
