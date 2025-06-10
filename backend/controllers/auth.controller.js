@@ -29,9 +29,9 @@ const setCookies = (res, accessToken, refreshToken) => {
 
 export const clientSignup = async (req, res) => {
   try {
-    const { username, email, password, confirmPassword, phone, citizenshipNo } = req.body;
+    const { username, email, password, phone} = req.body;
 
-    if (!username || !email || !password || !confirmPassword || !phone || !citizenshipNo) {
+    if (!username || !email || !password || !phone) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -43,10 +43,9 @@ export const clientSignup = async (req, res) => {
       email, 
       password,
       phone, 
-      citizenshipNo, 
       role: "client" 
     });
-    user.confirmPassword = confirmPassword;
+    // user.confirmPassword = confirmPassword;
     await user.save();
 
      const { accessToken, refreshToken } = generateTokens(user._id);
@@ -71,9 +70,9 @@ export const clientSignup = async (req, res) => {
 
 export const artistSignup = async (req, res) => {
   try {
-    const { username, email, password, confirmPassword, phone, citizenshipNo, category, location } = req.body;
+    const { username, email, password, phone, category, location } = req.body;
 
-    if (!username || !email || !password || !confirmPassword || !phone || !citizenshipNo || !category || !location) {
+    if (!username || !email || !password || !phone || !category || !location) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -85,12 +84,13 @@ export const artistSignup = async (req, res) => {
       email,
       password,
       phone,
-      citizenshipNo,
+// 
       role: "artist",
       category,
       location
     });
-    user.confirmPassword = confirmPassword;
+    
+   
     await user.save();
 
     const { accessToken, refreshToken } = generateTokens(user._id);

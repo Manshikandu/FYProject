@@ -24,13 +24,7 @@ const userSchema = new mongoose.Schema({
         unique: true,
         match: [/^\d{10}$/, "Phone number must be exactly 10 digits"]
     },
-   citizenshipNo: {
-        type: String,
-        required: [true, "Citizenship number is required"],
-        unique: true,
-        match: [/^\d{8,10}$/, "Invalid citizenship number (must be 8-10 digits)"]
-    },
-
+  
     role:{
         type: String,
         enum: ["client","artist","admin"],
