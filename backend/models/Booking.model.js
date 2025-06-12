@@ -1,63 +1,56 @@
-import mongoose from "mongoose";
+import Booking from "../models/Booking.js";
 
-const bookingSchema = new mongoose.Schema({
-  clientId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
-  artistId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // assuming artists are also stored in the User model
-    required: true
-  },
-  jobPostId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "JobPost",
-    required: false
-  },
-  eventTitle: {
-    type: String,
-    required: [true, "Event title is required"]
-  },
-  eventDate: {
-    type: Date,
-    required: [true, "Event date is required"]
-  },
-  location: {
-    type: String,
-    required: [true, "Event location is required"]
-  },
-  status: {
-    type: String,
-    enum: ["pending", "confirmed", "cancelled", "completed"],
-    default: "pending"
-  },
-  totalPrice: {
-    type: Number,
-    required: [true, "Total price is required"]
-  },
-  messages: [
-    {
-      senderId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-      },
-      message: {
-        type: String,
-        required: true
-      },
-      timestamp: {
-        type: Date,
-        default: Date.now
-      }
+export const createBooking = async (req, res) => {
+  try {
+    const {
+      name, email, phone,
+      date, startTime, endTime,
+      location, coordinates,
+      eventType, eventDetails, notes,
+       artistId,
+    } = req.body;
+   const clientId = req.user.id;
+
+
+    if (!name || !email || !date || !location) {
+      return res.status(400).json({ error: "Name, email, date, and location are required." });
     }
-  ]
-}, {
-  timestamps: true
-});
 
-const Booking = mongoose.model("Booking", bookingSchema);
+    const newBooking = new Booking({
+      name,
+      email,
+      phone,
+      date,
+      startTime,
+      endTime,
+      location,
+      coordinates,
+      eventType,
+      eventDetails,
+      notes,
+      clientId,
+      artistId,
+      status: {
+    type: String,
+    enum: ["pending", "accepted", "rejected", "contract_generated"],
+    default: "pending",
+  },
+    });
 
-export default Booking;
+    await newBooking.save();
+    res.status(201).json({ message: "Booking created successfully", booking: newBooking });
+
+  } catch (error) {
+    console.error("Error creating booking:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find().sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
