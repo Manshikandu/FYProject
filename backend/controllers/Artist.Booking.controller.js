@@ -1,63 +1,85 @@
 import Booking from "../models/Artist.Booking.model.js";
+import Artist from "../models/Artist.model.js"; 
+import User from "../models/user.model.js"; 
 
-// Create booking request
-export const bookingArtist =  async(req, res) =>
-{
-    try
+export const bookingArtist = async (req, res) => {
+  try {
+    const {name, email, phone, date, startTime, endTime, location, coordinates, eventType, eventDetails, notes, artistId } = req.body;
+
+    const clientId = req.user ? req.user._id : null; 
+
+    if (!name || !email || !date || !location || !artistId) 
     {
-        const {user, artist, eventDate, message} = req.body;
-        const booking = new Booking({user, artist,eventDate, message});
-        await booking.save();
-
-        res.status(201).json({message: "Booking request sent", booking});
-
-    }catch(error)
-    {
-        res.status(500).json({error:"Failed to send booking request.", details: error.message});
+      return res.status(400).json({ message: "Missing required fields" });
     }
-}
 
-// get booking request for an artist
-
-export const getBookingRequest = async(req, res) =>
-{
-    try{
-        const artistId = req.params.artistId;
-        const bookings = await Booking.find({'artist.id':artistId}).sort({created:-1});
-        res.status(200).json({message: "booking fetched", bookings})
+    const artistExists = await Artist.findById(artistId);
+    if (!artistExists) {
+      return res.status(404).json({ message: "Artist not found" });
     }
-    catch(error)
-    {
-        res.status(500).json({error: 'Failed to fetch bookings' , details: error.message});
+
+    const newBooking = new Booking({
+      name,
+      email,
+      phone,
+      date,
+      startTime,
+      endTime,
+      location,
+      coordinates,
+      eventType,
+      eventDetails,
+      notes,
+      artistId,
+      clientId,
+      status: "pending",
+    });
+
+    await newBooking.save();
+    res.status(201).json({ message: "Booking request submitted", booking: newBooking });
+  } 
+  catch (error) 
+  {
+    console.error("Error booking artist:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+export const getBookingRequest = async (req, res) => {
+  try {
+    const { artistId } = req.params;
+
+    const bookings = await Booking.find({ artistId }).sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export const BookingStatus = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { status } = req.body; // expected: "pending", "accepted", "rejected", "completed"
+
+    if (!["pending", "accepted", "rejected", "completed"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
     }
-}
 
-// Accept or reject bookings
-
-export const BookingStatus = async(req,res) => 
-{
-    try {
-        const {status} = req.body;
-        const {bookingId} = req.params;
-
-        if(!['accepted','rejected'].includes(status))
-        {
-            return res.status(400).json({error: 'Invalid status'});
-        }
-
-        const booking = await Booking.findByIdAndUpdate(
-            bookingId,
-            {status},
-            {new: true}
-        );
-
-        if(!booking)
-        {
-            res.status(404).json({error: 'Booking not found'});
-
-        }
-        res.status(200).json({message:`Booking ${status}`, booking});
-    } catch (error) {
-        res.status(500).json({error: 'Failed to update booking status', details: error.message});
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
     }
+
+    booking.status = status;
+    await booking.save();
+
+    res.json({ message: "Booking status updated", booking });
+  } catch (error) {
+    console.error("Error updating booking status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
