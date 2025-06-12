@@ -1,5 +1,8 @@
 import React from "react";
+
 import './App.css'
+// import './App.css'
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Login from "./pages/Login"
@@ -19,9 +22,15 @@ import BookingCalendar from "./pages/BookingCalendar";
 import { Toaster } from "react-hot-toast";
 
 
+
+
+// import { Router, RouterProvider } from "react-router-dom"
+
+
 function App() {
   
   return (
+
     <div >
       <Router>
         <Routes>
@@ -42,7 +51,8 @@ function App() {
       
       <Toaster />      
     </div>
-    
+       
+      
   )
 }
 

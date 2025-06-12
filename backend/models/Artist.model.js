@@ -2,14 +2,15 @@ import mongoose from 'mongoose';
 
 
 const artistSchema = new mongoose.Schema({
-    // userId:
-    // { 
-    //     // type: mongoose.Schema.Types.ObjectId, 
-    //     type: String, 
-    //     ref: 'User',
-    //     required: true
-    // },
-    name:
+    user:
+    { 
+        type: mongoose.Schema.Types.ObjectId, 
+        // type: String, 
+        ref: 'User',
+        required: true,
+        unique: true
+    },
+    username:
     {
         type: String,
         required: true
@@ -35,7 +36,13 @@ const artistSchema = new mongoose.Schema({
     portfolioLinks: [String],
 
     availability: [String],
-
+    media:
+    [
+        {
+            url: String,
+            type: String
+        }
+    ],
     ratings:
     {
         type: Number,
@@ -48,8 +55,7 @@ const artistSchema = new mongoose.Schema({
             comment: String,
             rating: Number 
         }
-    ],
-    
+    ],   
 },
 {timestamps: true});
 
