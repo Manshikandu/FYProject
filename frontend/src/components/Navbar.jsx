@@ -1,0 +1,174 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Menu, X, Search, LogIn, LogOut, User, Bell } from 'lucide-react';
+import { useUserStore } from "../stores/useUserStore";
+import { useNavigate } from 'react-router-dom';
+
+const Navbar = () => {
+  const { user, logout } = useUserStore();
+  const navigate = useNavigate();
+
+  const isArtist = user?.role === 'artist';
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [userDropdown, setUserDropdown] = useState(false);
+
+  // const user = false; // mock authentication
+
+  const handleLogout = () => {
+    logout(); 
+    console.log('Logged out');
+    navigate('/');
+  };
+
+  return (
+    <header className="fixed top-0 left-0 w-full bg-[#d9f3ea] shadow-md z-50 ">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-3">
+        <nav className="flex items-center justify-between py-4">
+          
+          <Link to="/" className="text-2xl font-bold text-black">
+            KalaConnect
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6 text-lg">
+            <Link to="/" className="hover:text-[#3ee6e6] transition-colors">Home</Link>
+            <Link to="/about" className="hover:text-[#3ee6e6] transition-colors">About</Link>
+            <Link to="/category" className="hover:text-[#3ee6e6] transition-colors">Category</Link>
+            <Link to="/post" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
+
+            {/* Search */}
+            <div className="relative ">
+              <input
+                type="text"
+                placeholder="Search..."
+                aria-label="Search"
+                className="pl-10 pr-4 py-1 rounded-md border border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 w-44 md:w-50 lg:w-80 xl:w-90 2xl:w-128 "
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+            </div>
+
+            {/* User Actions */}
+            {user ? (
+              <div className="relative flex items-center  gap-5">
+                <Link
+                  to="/notifications"
+                  className="relative flex items-center px-3 py-3 rounded-full text-cyan-400 hover:text-black transition"
+                  aria-label="Notifications"
+                >
+                  <Bell />
+                </Link>
+                <div className="relative">
+                <button
+                  onClick={() => setUserDropdown(!userDropdown)}
+                  className="flex items-center px-3 py-3 rounded-full bg-black hover:bg-cyan-400 text-white transition"
+                  aria-label="User menu"
+                >
+                  <User size={18} />
+                  <span className="hidden lg:inline"></span>
+                </button>
+                {userDropdown && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg">
+                      
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                    >
+                      <LogOut size={16} /> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            ) : (
+              <>
+                <Link
+                  to="/signup-select"
+                  className="bg-[#5ff7f7] hover:bg-[#3ee6e6] text-black font-medium py-1 px-4 rounded-full transition-colors"
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  to="/login"
+                  className="bg-black text-white hover:bg-gray-800 font-medium py-1 px-4 rounded-full flex items-center gap-2 transition duration-300"
+                >
+                  <LogIn size={18} />
+                  <span className="hidden sm:inline">Login</span>
+                </Link>
+
+              </>
+            )}
+          </div>
+
+
+
+
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden text-black"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </nav>
+
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div className="md:hidden flex flex-col gap-4 py-4">
+            <Link to="/" className="hover:text-[#3ee6e6] transition-colors">Home</Link>
+            <Link to="/about" className="hover:text-[#3ee6e6] transition-colors">About</Link>
+            <Link to="/category" className="hover:text-[#3ee6e6] transition-colors">Category</Link>
+            <Link to="/post" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search..."
+                aria-label="Search"
+                className="pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 w-full"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+            </div>
+
+            {user ? (
+              <>
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 py-2 hover:bg-gray-100 rounded-md"
+                >
+                  <User size={18} /> Profile
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 py-2 hover:bg-gray-100 rounded-md"
+                >
+                  <LogOut size={18} /> Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/signup"
+                  className="bg-[#5ff7f7] hover:bg-[#3ee6e6] text-black w-30 font-md py-2 px-4 rounded-full transition-colors text-center"
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 bg-black text-white hover:bg-gray-800 w-30  border py-2 px-3 rounded-md transition"
+                >
+                  <LogIn size={18} /> Login
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
+
+export default Navbar;
