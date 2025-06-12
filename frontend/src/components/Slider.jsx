@@ -16,7 +16,7 @@ const Slider = () => {
   }, []);
 
   return (
-    <div className="relative w-full max-w-[1600px] mx-auto h-[500px] overflow-hidden rounded-lg shadow-lg">
+    <div className="relative w-full max-w-[1600px] mx-auto h-[600px] overflow-hidden rounded-lg shadow-lg">
       {/* Slides */}
       {images.map((img, index) => (
         <div
