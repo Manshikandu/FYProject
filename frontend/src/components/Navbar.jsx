@@ -1,21 +1,29 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Search, LogIn, LogOut, User } from 'lucide-react';
+import { Menu, X, Search, LogIn, LogOut, User, Bell } from 'lucide-react';
+import { useUserStore } from "../stores/useUserStore";
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
+  const { user, logout } = useUserStore();
+  const navigate = useNavigate();
+
+  const isArtist = user?.role === 'artist';
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
 
-  const user = false; // mock authentication
+  // const user = false; // mock authentication
 
   const handleLogout = () => {
+    logout(); 
     console.log('Logged out');
-    // Add your logout logic here
+    navigate('/');
   };
 
   return (
     <header className="fixed top-0 left-0 w-full bg-[#d9f3ea] shadow-md z-50 ">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-3">
         <nav className="flex items-center justify-between py-4">
           
           <Link to="/" className="text-2xl font-bold text-black">
@@ -30,7 +38,7 @@ const Navbar = () => {
             <Link to="/post" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
 
             {/* Search */}
-            <div className="relative">
+            <div className="relative ">
               <input
                 type="text"
                 placeholder="Search..."
@@ -42,23 +50,27 @@ const Navbar = () => {
 
             {/* User Actions */}
             {user ? (
-              <div className="relative">
+              <div className="relative flex items-center  gap-5">
+                <Link
+                  to="/notifications"
+                  className="relative flex items-center px-3 py-3 rounded-full text-cyan-400 hover:text-black transition"
+                  aria-label="Notifications"
+                >
+                  <Bell />
+                </Link>
+                <div className="relative">
                 <button
                   onClick={() => setUserDropdown(!userDropdown)}
-                  className="flex items-center gap-2 px-4 py-1 rounded-md hover:bg-gray-100 transition"
+                  className="flex items-center px-3 py-3 rounded-full bg-black hover:bg-cyan-400 text-white transition"
                   aria-label="User menu"
                 >
                   <User size={18} />
-                  <span className="hidden lg:inline">Account</span>
+                  <span className="hidden lg:inline"></span>
                 </button>
                 {userDropdown && (
                   <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg">
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 hover:bg-gray-100"
-                    >
-                      Profile
-                    </Link>
+                      
+
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
@@ -68,6 +80,7 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
+            </div>
             ) : (
               <>
                 <Link
@@ -87,6 +100,10 @@ const Navbar = () => {
               </>
             )}
           </div>
+
+
+
+
 
           {/* Mobile Menu Button */}
           <button
