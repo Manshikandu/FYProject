@@ -1,7 +1,11 @@
 import { create } from 'zustand';
 import axios from '../lib/axios';
 
-export const useUserStore = create((set) => ({
+ //import {persist} from 'zustand/middleware';
+
+export const useUserStore = create((set, get) => ({
+
+ 
   user: null,
   loading: false,
   checkingAuth: true,
@@ -64,6 +68,38 @@ export const useUserStore = create((set) => ({
     }
   },
 
+  // persist(
+  //   (set) => ({
+  //     artist : null,
+  //     loading: false,
+
+    //  artistSignup: async ({ username, email, phone, password, category, location }) => {
+    //     set({ loading: true });
+
+    //     if (!username || !email || !phone || !password || !category || !location) {
+    //       set({ loading: false });
+    //       throw new Error("All fields are required");
+    //     }
+
+    //     try {
+    //       const res = await axios.post("/auth/artistSignup", {
+    //         username,
+    //         email,
+    //         phone,
+    //         password,
+    //         category,
+    //         location,
+    //       });
+
+    //       set({ artist: res.data, loading: false });
+    //       return res.data;
+    //     } catch (error) {
+    //       set({ loading: false });
+    //       throw new Error(error.response?.data?.message || "Signup failed");
+    //     }
+    //   },
+    
+
 
   login: async (email, password) => {
     set({ loading: true });
@@ -91,7 +127,6 @@ export const useUserStore = create((set) => ({
       const res = await axios.get("/auth/profile");
       set({ user: res.data, checkingAuth: false });
     } catch (error) {
-      console.error("Auth check failed:", error);
       set({ checkingAuth: false, user: null });
     }
   },
