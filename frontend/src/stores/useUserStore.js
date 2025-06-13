@@ -6,44 +6,33 @@ export const useUserStore = create((set) => ({
   loading: false,
   checkingAuth: true,
 
-  clientSignup : async ({ username, email, phone, password }) => {
+  clientSignup: async ({ username, email, phone, password }) => {
     set({ loading: true });
-
-    // Validation inside store
-    if (!username || !email || !phone || !password ) {
+    if (!username || !email || !phone || !password) {
       set({ loading: false });
       throw new Error("All fields are required");
     }
-
-
     try {
       const res = await axios.post("/auth/clientSignup", {
         username,
         email,
         phone,
         password,
-        // confirmPassword,
-        // citizenshipNo,
       });
-
       set({ user: res.data, loading: false });
-      return res.data; // Allow component to know it succeeded
+      return res.data;
     } catch (error) {
       set({ loading: false });
       throw new Error(error.response?.data?.message || "Signup failed");
     }
   },
 
-   artistSignup: async ({ username, email, phone, password, category, location }) => {
+  artistSignup: async ({ username, email, phone, password, category, location }) => {
     set({ loading: true });
-
-    // Validation inside store
     if (!username || !email || !phone || !password || !category || !location) {
       set({ loading: false });
       throw new Error("All fields are required");
     }
-
-
     try {
       const res = await axios.post("/auth/artistSignup", {
         username,
@@ -51,25 +40,22 @@ export const useUserStore = create((set) => ({
         phone,
         password,
         category,
-        location
-        // confirmPassword,
-        // citizenshipNo,
+        location,
       });
-
       set({ user: res.data, loading: false });
-      return res.data; // Allow component to know it succeeded
+      return res.data;
     } catch (error) {
       set({ loading: false });
       throw new Error(error.response?.data?.message || "Signup failed");
     }
   },
 
-
   login: async (email, password) => {
     set({ loading: true });
     try {
       const res = await axios.post("/auth/login", { email, password });
       set({ user: res.data, loading: false });
+      return true;
     } catch (error) {
       set({ loading: false });
       throw new Error(error.response?.data?.message || "Login failed");
@@ -79,7 +65,7 @@ export const useUserStore = create((set) => ({
   logout: async () => {
     try {
       await axios.post("/auth/logout");
-      set({ user: null });
+      set({ user: null, loading: false });
     } catch (error) {
       throw new Error(error.response?.data?.message || "Logout failed");
     }
@@ -90,9 +76,11 @@ export const useUserStore = create((set) => ({
     try {
       const res = await axios.get("/auth/profile");
       set({ user: res.data, checkingAuth: false });
+      return true;
     } catch (error) {
       console.error("Auth check failed:", error);
       set({ checkingAuth: false, user: null });
+      return false;
     }
   },
 }));
