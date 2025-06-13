@@ -1,12 +1,24 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 const CategoryItem = ({ category }) => {
-  return (
-    <Link to={category.href} className="group block rounded overflow-hidden shadow-md hover:shadow-xl transition">
-      <img src={category.imageUrl} alt={category.name} className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300" />
-      <div className="p-4 bg-white text-center text-[#4b3832] font-semibold">{category.name}</div>
-    </Link>
-  );
+	return (
+		<div className='relative overflow-hidden xl:h-60 sm:h-50 w-full rounded-lg group'>
+			<Link to={"/category" + category.href}>
+				<div className='w-full h-full cursor-pointer'>
+					<div className='absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 opacity-50 z-10' />
+					<img
+						src={category.imageUrl}
+						alt={category.name}
+						className='w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110'
+						loading='lazy'
+					/>
+					<div className='absolute bottom-0 left-0 right-0 p-4 z-20'>
+						<h3 className='text-white text-3xl font-bold mb-2'>{category.name}</h3>	
+					</div>
+				</div>
+			</Link>
+		</div>
+	);
 };
 
 export default CategoryItem;
