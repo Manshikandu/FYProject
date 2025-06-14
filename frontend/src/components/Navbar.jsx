@@ -1,22 +1,17 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Search, LogIn, LogOut, User, Bell } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, Search, LogIn, LogOut, User, Bell, CalendarCheck } from 'lucide-react';
 import { useUserStore } from "../stores/useUserStore";
-import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const { user, logout } = useUserStore();
   const navigate = useNavigate();
 
-  const isArtist = user?.role === 'artist';
-
   const [menuOpen, setMenuOpen] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
 
-  // const user = false; // mock authentication
-
   const handleLogout = () => {
-    logout(); 
+    logout();
     console.log('Logged out');
     navigate('/');
   };
@@ -50,7 +45,7 @@ const Navbar = () => {
 
             {/* User Actions */}
             {user ? (
-              <div className="relative flex items-center  gap-5">
+              <div className="relative flex items-center gap-5">
                 <Link
                   to="/notifications"
                   className="relative flex items-center px-3 py-3 rounded-full text-cyan-400 hover:text-black transition"
@@ -58,29 +53,37 @@ const Navbar = () => {
                 >
                   <Bell />
                 </Link>
-                <div className="relative">
-                <button
-                  onClick={() => setUserDropdown(!userDropdown)}
-                  className="flex items-center px-3 py-3 rounded-full bg-black hover:bg-cyan-400 text-white transition"
-                  aria-label="User menu"
-                >
-                  <User size={18} />
-                  <span className="hidden lg:inline"></span>
-                </button>
-                {userDropdown && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg">
-                      
 
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                      <LogOut size={16} /> Logout
-                    </button>
-                  </div>
-                )}
+                {/* New Booking Button */}
+                <button
+                  onClick={() => navigate('/my-bookings')}
+                  className="flex items-center px-3 py-3 rounded-full text-black hover:text-[#3ee6e6] transition "
+                  aria-label="My Bookings"
+                  title="My Bookings"
+                >
+                  <CalendarCheck />
+                </button>
+
+                <div className="relative">
+                  <button
+                    onClick={() => setUserDropdown(!userDropdown)}
+                    className="flex items-center px-3 py-3 rounded-full bg-black hover:bg-cyan-400 text-white transition"
+                    aria-label="User menu"
+                  >
+                    <User size={18} />
+                  </button>
+                  {userDropdown && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <LogOut size={16} /> Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
             ) : (
               <>
                 <Link
@@ -96,14 +99,9 @@ const Navbar = () => {
                   <LogIn size={18} />
                   <span className="hidden sm:inline">Login</span>
                 </Link>
-
               </>
             )}
           </div>
-
-
-
-
 
           {/* Mobile Menu Button */}
           <button
@@ -140,6 +138,12 @@ const Navbar = () => {
                   className="flex items-center gap-2 py-2 hover:bg-gray-100 rounded-md"
                 >
                   <User size={18} /> Profile
+                </Link>
+                <Link
+                  to="/my-bookings"
+                  className="flex items-center gap-2 py-2 hover:bg-gray-100 rounded-md"
+                >
+                  <CalendarCheck size={18} /> My Bookings
                 </Link>
                 <button
                   onClick={handleLogout}
