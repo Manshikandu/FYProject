@@ -17,7 +17,6 @@ const Navbar = () => {
   };
 
   const[query, setQuery] = useState('');
-  // const navigate2 = useNavigate();
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && query.trim()) {
