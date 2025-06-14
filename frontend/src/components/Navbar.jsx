@@ -21,6 +21,17 @@ const Navbar = () => {
     navigate('/');
   };
 
+  const[query, setQuery] = useState('');
+  // const navigate2 = useNavigate();
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && query.trim()) {
+      navigate(`/search?query=${encodeURIComponent(query.trim())}`);
+      setQuery('');
+    }
+  };
+  
+
   return (
     <header className="fixed top-0 left-0 w-full bg-[#d9f3ea] shadow-md z-50 ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-3">
@@ -42,6 +53,9 @@ const Navbar = () => {
               <input
                 type="text"
                 placeholder="Search..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 aria-label="Search"
                 className="pl-10 pr-4 py-1 rounded-md border border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 w-44 md:w-50 lg:w-80 xl:w-90 2xl:w-128 "
               />
