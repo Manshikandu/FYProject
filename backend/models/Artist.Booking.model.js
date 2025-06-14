@@ -30,7 +30,7 @@ const BookingSchema = new mongoose.Schema(
 const bookingSchema = new mongoose.Schema({
     name:
     {
-        type: string,
+        type: String,
         required: true,
     },
     email:

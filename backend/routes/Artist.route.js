@@ -4,10 +4,12 @@ import {UpdateArtist,
         ArtistProfile,
         upload,
         availability,
-        Updateavailability
+        Updateavailability,
+        searchArtist
      } from '../controllers/Artist.controller.js';
 const router = express.Router();
 
+router.get('/search', searchArtist);
 router.put('/update/:id', UpdateArtist);   //Update Artist Profile
 router.get('/:id', ArtistProfile);   //get Artist profile by ID.
 router.post('/upload-media', upload);   //Artist to upload media

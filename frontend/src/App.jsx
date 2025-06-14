@@ -20,6 +20,8 @@ import ArtistDashboard from "./pages/ArtistDashboard";
 import ArtistProfile from "./pages/ArtistProfile";
 
 
+import SearchResult from "./pages/SearchResult";
+
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -39,6 +41,17 @@ function App() {
           <Route path="/artistprofile" element={<ArtistProfile />} />
           <Route path="/artistdash" element={<ArtistDashboard />} />
          
+
+
+          <Route path="/artist-booking" element={<ArtistBookingForm />} />
+
+          <Route path="/job-post" element={<JobPostForm />} />
+
+          <Route path="/booking-calendar" element={<BookingCalendar />} />
+
+          <Route path="/search" element={<SearchResult />} />
+
+
         </Routes>     
       </Router> 
       

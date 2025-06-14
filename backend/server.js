@@ -27,6 +27,9 @@ app.use(cors({
   credentials: true,                
 }));
 
+app.get('/test', (req, res) => {
+  res.json({ message: "Test route working" });
+});
 
 app.use("/api/artist", artistRoutes);
 app.use("/api/auth", authRoutes);
