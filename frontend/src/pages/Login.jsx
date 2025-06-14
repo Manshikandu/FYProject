@@ -20,9 +20,16 @@ const LoginPage = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			await login(email, password);
-			navigate("/");
-			toast.success("Login successful!");
+    const user = await login(email, password); // get user info
+    toast.success("Login successful!");
+
+    // Redirect based on user type
+    if (user.role === "artist" || user.userType === "artist") {
+      navigate("/artistdash");
+    } else {
+      navigate("/dashboard"); // or other route for clients/admins
+    }
+
 
 		} catch (error) {
 			toast.error(error.message);
