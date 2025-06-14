@@ -1,6 +1,4 @@
 import React from "react";
-
-import './App.css'
 // import './App.css'
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -12,12 +10,9 @@ import SignUpSelect from "./pages/SignUpSelect";
 
 import HomePage from "./pages/HomePage";
 import About from "./pages/About";
+import ArtistDashboard from "./pages/ArtistDashboard";
+import ArtistProfile from "./pages/ArtistProfile";
 
-import ArtistBookingForm from "./pages/ArtistBooking";
-
-import JobPostForm from "./pages/JobPostForm";
-
-import BookingCalendar from "./pages/BookingCalendar";
 
 import { Toaster } from "react-hot-toast";
 
@@ -29,6 +24,7 @@ import { Toaster } from "react-hot-toast";
 
 function App() {
   
+
   return (
 
     <div >
@@ -40,12 +36,9 @@ function App() {
           <Route path="/artistSignup" element={<ArtistSignUp />} />
           <Route path="/signup-select" element={<SignUpSelect />} />
           <Route path="/about" element={<About />} />
-
-          <Route path="/artist-booking" element={<ArtistBookingForm />} />
-
-          <Route path="/job-post" element={<JobPostForm />} />
-
-          <Route path="/booking-calendar" element={<BookingCalendar />} />
+          <Route path="/artistprofile" element={<ArtistProfile />} />
+          <Route path="/artistdash" element={<ArtistDashboard />} />
+         
         </Routes>     
       </Router> 
       
