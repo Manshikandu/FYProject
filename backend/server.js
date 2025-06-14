@@ -9,7 +9,10 @@ import artistRoutes from "./routes/Artist.route.js"
 
 import authRoutes from "./routes/auth.route.js";
 import bookingRoutes from "./routes/Artist.Booking.route.js";
+import JobPostRoutes from "./routes/Job.Post.route.js";
+
 import calendarRoutes from "./routes/Calendar.route.js";
+
 dotenv.config();
 
 const app = express();
@@ -28,6 +31,8 @@ app.use(cors({
 app.use("/api/artist", artistRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/jobposts", JobPostRoutes);
+
 app.use("/api/google", calendarRoutes );
 
 app.listen(PORT, () => {
