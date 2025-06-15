@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
         required: [true,"Email is required"],
         unique: true,
         lowercase: true,
-        trim: true
+        match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address']
     },
     password: {
         type: String,
@@ -27,53 +27,11 @@ const userSchema = new mongoose.Schema({
   
     role:{
         type: String,
-        enum: ["client","artist","admin"],
+        // enum: ["client","artist","admin"],
         default: "client"
     },
-    category: {
-        type: String,
-        enum: ["Musician","Singer", "Dancer", "DJ","MC", "Photography", "Other"], 
-        required: function() { return this.role === "artist"; }  
-    },
-    location: {
-        type: String,
-        required: function () {
-        return this.role === "artist";
-        }
-    },
-    style:
-    {
-        type: String
-    },
-    bio:
-    {
-        type: String
-    },
-    portfolioLinks: [String],
-
-    availability: [String],
-    media:
-    [
-        {
-            url: String,
-            type: String
-        }
-    ],
-    ratings:
-    {
-        type: Number,
-        default: 0
-    },
-    reviews:
-    [
-        {
-            userId: String, 
-            comment: String,
-            rating: Number 
-        }
-    ],
-    }
-,{
+},
+   {
     timestamps: true
 });
 
