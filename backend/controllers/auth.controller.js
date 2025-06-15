@@ -1,11 +1,12 @@
+import jwt from "jsonwebtoken";
+
+import redis from "../lib/redis.js";
 import User from "../models/user.model.js";
 import Artist from "../models/Artist.model.js";
-
-import jwt from "jsonwebtoken";
-import redis from "../lib/redis.js";
+import bcrypt from "bcryptjs";
 
 const generateTokens = (userId) => {
-  const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
+  const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "2d" });
   const refreshToken = jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
   return { accessToken, refreshToken };
 };
@@ -16,97 +17,40 @@ const storeRefreshToken = async (userId, refreshToken) => {
 
 const setCookies = (res, accessToken, refreshToken) => {
   res.cookie("accessToken", accessToken, {
-    httpOnly: true, 
+    httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 15 * 60 * 1000
+    maxAge: 2 * 24 * 60 * 60 * 1000,
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 1000
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
 
+// CLIENT SIGNUP → uses User model
 export const clientSignup = async (req, res) => {
   try {
-    const { username, email, password, phone} = req.body;
+    const { username, email, password, phone } = req.body;
 
     if (!username || !email || !password || !phone) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const userExists = await User.findOne({ $or: [{ email }, { phone }] });
-    if (userExists) return res.status(400).json({ message: "User already exists" });
+    const exists = await User.findOne({ $or: [{ email }, { phone }] });
+    if (exists) return res.status(400).json({ message: "User already exists" });
 
-    const user = new User({ 
-      username,
-      email, 
-      password,
-      phone, 
-      role: "client" 
-    });
-    // user.confirmPassword = confirmPassword;
-    await user.save();
-
-     const { accessToken, refreshToken } = generateTokens(user._id);
-    await storeRefreshToken(user._id, refreshToken);
-    setCookies(res, accessToken, refreshToken);
-
-
-     res.status(201).json({
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      },
-      message: "Client signed up successfully"
-    });
-  } catch (error) {
-    console.error("Error in clientSignup:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-export const artistSignup = async (req, res) => {
-  try {
-    const { username, email, password, phone, category, location } = req.body;
-
-    if (!username || !email || !password || !phone || !category || !location) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const userExists = await User.findOne({ $or: [{ email }, { phone }] });
-    if (userExists) return res.status(400).json({ message: "User already exists" });
 
     const user = new User({
       username,
       email,
-      password,
+      password, // hashed via pre-save
       phone,
-// 
-      role: "artist",
-      category,
-      location
+      role: "client",
     });
-    
-   
     await user.save();
-
-    const newArtist = new Artist ({
-      user: user._id,   //Link to the User model
-      username,
-      location,
-      category,
-      bio: "",          // can be updated later
-      style: "",
-      portfolioLinks: [],
-      availability: [],
-    })
-    await newArtist.save();
-    
 
     const { accessToken, refreshToken } = generateTokens(user._id);
     await storeRefreshToken(user._id, refreshToken);
@@ -115,52 +59,97 @@ export const artistSignup = async (req, res) => {
     res.status(201).json({
       user: {
         _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role
+        username,
+        email,
+        phone,
+        role: user.role,
       },
-      message: "Artist signed up successfully"
+      message: "Client signed up successfully",
     });
   } catch (error) {
-     if (error.name === "ValidationError") {
-    const messages = Object.values(error.errors).map(val => val.message);
-    return res.status(400).json({ message: messages.join(", ") });
+    console.error("Error in clientSignup:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
+};
+
+// ARTIST SIGNUP → only in Artist model
+export const artistSignup = async (req, res) => {
+  try {
+    const { username, email, password, phone, category, location } = req.body;
+
+    if (!username || !email || !password || !phone || !category || !location) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const exists = await Artist.findOne({ $or: [{ email }, { phone }] });
+    if (exists) return res.status(400).json({ message: "Artist already exists" });
+
+
+    const artist = new Artist({
+      username,
+      email,
+      password,
+      phone,
+      role: "artist",
+      category,
+      location,
+    });
+
+    await artist.save();
+
+    const { accessToken, refreshToken } = generateTokens(artist._id);
+    await storeRefreshToken(artist._id, refreshToken);
+    setCookies(res, accessToken, refreshToken);
+
+    res.status(201).json({
+      user: {
+        _id: artist._id,
+        username: artist.username,
+        email: artist.email,
+        phone: artist.phone,
+        role: artist.role,
+        category: artist.category,
+        location: artist.location,
+      },
+      message: "Artist signed up successfully",
+    });
+  } catch (error) {
     console.error("Error in artistSignup:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
-//login
+// LOGIN → check BOTH User and Artist models
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: "Email and password required" });
 
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+    console.log("Login attempt for email:", email);
+
+    let user = await User.findOne({ email }) || await Artist.findOne({ email });
+    console.log("User found:", user);
+
+    if (!user) return res.status(401).json({ message: "Invalid credentials (email)" });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: "Invalid credentials (password)" });
 
     const { accessToken, refreshToken } = generateTokens(user._id);
     await storeRefreshToken(user._id, refreshToken);
     setCookies(res, accessToken, refreshToken);
 
-    res.status(200).json({
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      },
-      message: "Login successful"
-    });
+    const { password: _, ...userData } = user.toObject();
+
+    res.status(200).json({ user: userData }); // role already included inside userData.role ✅
   } catch (error) {
-    console.error("Error in login:", error.message);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
-//logout
+
+// LOGOUT
 export const logout = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
@@ -177,6 +166,7 @@ export const logout = async (req, res) => {
   }
 };
 
+// REFRESH TOKEN
 export const refreshToken = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
@@ -184,35 +174,24 @@ export const refreshToken = async (req, res) => {
 
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
-
     if (storedToken !== refreshToken) {
       return res.status(401).json({ message: "Invalid refresh token" });
     }
 
     const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "15m"
+      expiresIn: "2d",
     });
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 15 * 60 * 1000
+      maxAge: 2 *24 * 60 * 1000,
     });
 
     res.status(200).json({ message: "Token refreshed successfully" });
   } catch (error) {
     console.error("Error in refreshToken:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-// Get user profile
-export const getProfile = async (req, res) => {
-  try {
-    res.status(200).json(req.user);
-  } catch (error) {
-    console.error("Error in getProfile:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
