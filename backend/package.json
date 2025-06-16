@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "fyproject",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -7,23 +7,27 @@
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Manshikandu/FYProject.git"
+  },
   "keywords": [],
+  "type": "module",
   "author": "",
   "license": "ISC",
-  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Manshikandu/FYProject/issues"
+  },
+  "homepage": "https://github.com/Manshikandu/FYProject#readme",
   "dependencies": {
     "bcryptjs": "^3.0.2",
-    "cloudinary": "^2.6.1",
     "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "googleapis": "^150.0.1",
     "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.1"
   },
-  "homepage": "https://github.com/Manshikandu/FYProject#readme",
   "devDependencies": {
     "nodemon": "^3.1.10"
   }
