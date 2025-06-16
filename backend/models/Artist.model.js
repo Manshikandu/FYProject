@@ -42,13 +42,11 @@ const artistSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-   
+
     bio:
     {
         type: String
     },
-    
-   
     portfolioLink: [
     {
       url: String,
@@ -68,7 +66,7 @@ const artistSchema = new mongoose.Schema({
   profilePicture: {
     url: String,
   },
-
+  
     availability: [
     {
         date: {
@@ -85,14 +83,10 @@ const artistSchema = new mongoose.Schema({
     wage: {
         type: Number,
         required: true,
-        // min: 22,
-        // default: // or set a default artist rate
-    },
 
    
 },
 {timestamps: true});
-
 
 
 

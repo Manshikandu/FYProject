@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import { useState, useEffect } from "react";
 import L from "leaflet";
+import toast from "react-hot-toast";
 
 const markerIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
@@ -10,15 +11,9 @@ const markerIcon = new L.Icon({
 
 const defaultPosition = { lat: 27.7172, lng: 85.3240 }; // Kathmandu fallback
 
-const LocationMarker = ({ position }) => {
-  return position ? <Marker position={position} icon={markerIcon} /> : null;
-};
-
 const ChangeMapView = ({ center }) => {
   const map = useMap();
-  if (center) {
-    map.setView(center);
-  }
+  if (center) map.setView(center);
   return null;
 };
 
@@ -28,32 +23,24 @@ const MapPicker = ({ value, onChange }) => {
   const [searchInput, setSearchInput] = useState("");
   const [confirmedPosition, setConfirmedPosition] = useState(null);
 
-  // On mount: get user location or fallback to default
   useEffect(() => {
-    if (!value) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            setPosition(coords);
-            setMapCenter(coords);
-            setSearchInput(`${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
-          },
-          () => {
-            setPosition(defaultPosition);
-            setMapCenter(defaultPosition);
-            setSearchInput(`${defaultPosition.lat}, ${defaultPosition.lng}`);
-          }
-        );
-      } else {
-        setPosition(defaultPosition);
-        setMapCenter(defaultPosition);
-        setSearchInput(`${defaultPosition.lat}, ${defaultPosition.lng}`);
-      }
+    if (!value && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setPosition(coords);
+          setMapCenter(coords);
+          setSearchInput(`${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
+        },
+        () => {
+          setPosition(defaultPosition);
+          setMapCenter(defaultPosition);
+          setSearchInput(`${defaultPosition.lat}, ${defaultPosition.lng}`);
+        }
+      );
     }
   }, [value]);
 
-  // Forward geocode
   const searchLocation = async () => {
     if (!searchInput) return;
     try {
@@ -67,14 +54,14 @@ const MapPicker = ({ value, onChange }) => {
         setPosition(newPos);
         setMapCenter(newPos);
       } else {
-        alert("Location not found");
+        toast.error("Location not found");
       }
     } catch (err) {
-      alert("Error searching location");
+      console.error("Error searching location:", err);
+      toast.error("Error searching location");
     }
   };
 
-  // Reverse geocode to update search input
   const reverseGeocode = async (lat, lng) => {
     try {
       const res = await fetch(
@@ -91,33 +78,25 @@ const MapPicker = ({ value, onChange }) => {
     }
   };
 
-  // On map click
   const handleMapClick = async (latlng) => {
     setPosition(latlng);
     setMapCenter(latlng);
     await reverseGeocode(latlng.lat, latlng.lng);
   };
 
-  // Map marker that listens to click event
-  const LocationMarkerWithClick = () => {
-    useMapEvents({
-      click: (e) => {
-        handleMapClick(e.latlng);
-      },
-    });
-    return position ? <Marker position={position} icon={markerIcon} /> : null;
-  };
-
-  // Set location confirmation
   const handleSetLocation = () => {
+    if (!position) {
+      toast.error("Please select a location first");
+      return;
+    }
     setConfirmedPosition(position);
     onChange(position);
+    toast.success("Location set successfully");
   };
 
-  // Go to current location button handler
   const goToCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      toast.error("Geolocation is not supported by your browser");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -126,11 +105,19 @@ const MapPicker = ({ value, onChange }) => {
         setPosition(coords);
         setMapCenter(coords);
         await reverseGeocode(coords.lat, coords.lng);
+        toast.success("Moved to your current location");
       },
       () => {
-        alert("Unable to retrieve your location");
+        toast.error("Unable to retrieve your location");
       }
     );
+  };
+
+  const LocationMarkerWithClick = () => {
+    useMapEvents({
+      click: (e) => handleMapClick(e.latlng),
+    });
+    return position ? <Marker position={position} icon={markerIcon} /> : null;
   };
 
   return (
@@ -153,7 +140,6 @@ const MapPicker = ({ value, onChange }) => {
         >
           Set
         </button>
-      
       </div>
 
       <MapContainer
@@ -161,27 +147,30 @@ const MapPicker = ({ value, onChange }) => {
         zoom={13}
         style={{ height: "300px", width: "100%" }}
       >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
         <ChangeMapView center={mapCenter} />
         <LocationMarkerWithClick />
       </MapContainer>
 
-        {confirmedPosition && (
-            <div className="mt-2 flex items-center gap-2">
-                <p>
-                <b>Location Set:</b> {confirmedPosition.lat.toFixed(5)}, {confirmedPosition.lng.toFixed(5)}
-                </p>
-                <button
-                onClick={goToCurrentLocation}
-                className="bg-gray-700 text-white px-1 rounded"
-                title="Go to Current Location"
-                >
-                📍
-                </button>
-            </div>
-            )
-        }
+      {confirmedPosition && (
+        <div className="mt-2 flex items-center gap-2">
+          <p>
+            <b>Location Set:</b> {confirmedPosition.lat.toFixed(5)}, {confirmedPosition.lng.toFixed(5)}
+          </p>
+          <button
+            onClick={goToCurrentLocation}
+            className="bg-gray-700 text-white px-2 rounded"
+            title="Go to Current Location"
+          >
+            📍
+          </button>
+        </div>
+      )}
     </div>
-   );
-}
+  );
+};
+
 export default MapPicker;

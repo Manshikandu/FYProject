@@ -1,13 +1,16 @@
-import Navbar from '../components/Navbar';
+
 import Slider from '../components/Slider';
 import CategorySection from '../components/CategorySection';
+
+import Footer from '../components/Footer';
 
 const HomePage = () => {
   return (
     <>
-      <Navbar />
+    
       <Slider />
       <CategorySection />
+      <Footer />
     </>
   );
 };

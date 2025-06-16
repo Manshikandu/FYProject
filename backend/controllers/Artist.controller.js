@@ -133,5 +133,97 @@ export const upload = async(req,res) =>
 //     }
 // };
 
+// export const searchArtist = async(req,res) => {
+//     try {
+//         // const {name,category,location,style} = req.query;
+//         const query = req.query.query?.toString().trim();
+
+//     if (!query) {
+//       return res.status(400).json({ message: "Search query is required" });
+//     }
+
+//     // if (query) {
+//       const regex = new RegExp(query, 'i');
+//     //   searchQuery.$or = [
+//     const artists = await Artist.find({
+//         $or: [
+//             { name: regex },
+//             { username: regex },
+//             { category: regex },
+//             { location: regex },
+//             { style: regex }
+//         ]
+//     });
+        
+    
+//     // } 
+//         // if(name) 
+//         // {
+//         //     query.name = {$regex: name, $options: "i"};
+//         // }
+//         // if(category)
+//         // {
+//         //     query.category = {$regex: category, $options: "i"};
+//         // }
+//         // if(location)
+//         // {
+//         //     query.location = {$regex: location, $options: "i"};
+//         // }
+//         // if(style)
+//         // {
+//         //     query.style = style;
+//         // }
+    
+//         console.log("Search query: ",query);
+
+//         // const artists = await Artist.find(query);
+//         console.log("Artists found: ",artists.length);
+
+//         res.status(200).json(artists);
+//     } catch (error) {
+//         console.log("Artist search error: ", error);
+//         console.error("Artist search error : ",error.message);
+//         res.status(500).json({message: "Internal Server Error"});
+//     }
+// }
+
+
+export const searchArtist = async (req, res) => {
+  try {
+    const query = req.query.query?.toString().trim();
+
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+
+    // Helper to escape regex special characters
+    function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Split query into words & build regex list
+    const words = query.split(' ').filter(Boolean);
+    const regexList = words.map(word => new RegExp(escapeRegex(word), 'i'));
+
+    // Search in all relevant fields using $or
+    const artists = await Artist.find({
+      $or: [
+        ...regexList.map(regex => ({ name: regex })),
+        ...regexList.map(regex => ({ username: regex })),
+        ...regexList.map(regex => ({ category: regex })),
+        ...regexList.map(regex => ({ location: regex })),
+        ...regexList.map(regex => ({ style: regex })),
+      ]
+    });
+
+    console.log("Search query:", query);
+    console.log("Artists found:", artists.length);
+    res.status(200).json(artists);
+  } catch (error) {
+    console.error("Artist search error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 
 

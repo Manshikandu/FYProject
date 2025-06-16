@@ -2,6 +2,7 @@ import express from 'express';
 import Artist from '../models/Artist.model.js';
 import {UpdateArtist,
         ArtistProfile,
+
         upload
         //availability
        // Updateavailability
@@ -10,6 +11,7 @@ const router = express.Router();
 
 
 router.patch("/profile/:id", UpdateArtist);
+
 
 router.get('/:id', ArtistProfile);   //get Artist profile by ID.
 
