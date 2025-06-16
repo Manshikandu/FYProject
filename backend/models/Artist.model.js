@@ -42,28 +42,31 @@ const artistSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    // location:{
-    //     type: String,
-    //     required: function () {
-    //         return this.role === "artist";
-    //     }
-    // }
+
     bio:
     {
         type: String
     },
-     profilePicture: {
-      url: { type: String, default: "" }, // Image URL (stored from S3, Cloudinary, or your local server)
-      public_id: { type: String, default: "" }, // For deletion if using Cloudinary
+    portfolioLink: [
+    {
+      url: String,
+      type: { type: String, default: "link" },
     },
-    
-    portfolioLink:  [
-        {
-            url: String,
-            type: String
-        }
-    ],
-
+  ],
+  media: [
+    {
+      url: String,
+      type: { type: String, enum: ["image", "video"] },
+    },
+  ],
+  videoUrl: {
+    type: String,
+    default: "",
+  },
+  profilePicture: {
+    url: String,
+  },
+  
     availability: [
     {
         date: {
@@ -80,24 +83,12 @@ const artistSchema = new mongoose.Schema({
     wage: {
         type: Number,
         required: true,
-        min: 1000,
-        default: 0 // or set a default artist rate
-    },
 
-     media: [
-      {
-        url: { type: String, required: true }, // image or video URL
-        type: {
-          type: String,
-          enum: ["image", "video"], // helps identify media type
-          required: true,
-        },
-        public_id: { type: String, default: "" }, // for deletion from Cloudinary/local storage
-      },
-    ],
    
 },
 {timestamps: true});
+
+
 
 //pre-save hook to hash pw before saving to db
 artistSchema.pre("save", async function(next) {
