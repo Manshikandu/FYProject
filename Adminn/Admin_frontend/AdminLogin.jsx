@@ -38,7 +38,7 @@ const AdminLogin = () => {
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">
+        <h2 className="text-2xl font-bold mb-6 text-center text-purple-700">
           Admin Login
         </h2>
 
@@ -53,7 +53,7 @@ const AdminLogin = () => {
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="w-full border border-gray-300 p-2 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 p-2 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
           required
         />
 
@@ -62,13 +62,13 @@ const AdminLogin = () => {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full border border-gray-300 p-2 rounded mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 p-2 rounded mb-6 focus:outline-none focus:ring-2 focus:ring-purple-500"
           required
         />
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition"
         >
           Login
         </button>
