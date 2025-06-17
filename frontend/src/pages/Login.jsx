@@ -27,7 +27,7 @@ const LoginPage = () => {
     if (user.role === "artist" || user.userType === "artist") {
       navigate("/artistdash");
     } else {
-      navigate("/dashboard"); // or other route for clients/admins
+      navigate("/"); // or other route for clients/admins
     }
 
 

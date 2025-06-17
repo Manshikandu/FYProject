@@ -83,8 +83,38 @@ import ClientPostsPage from "./pages/ClientPostsPage"
 import ArtistBookingForm from "./pages/ArtistBooking";
 import MyBookings from "./pages/MyBookings";
 
+// import ClientPostsPage from "./pages/ClientPostsPage";
+// import CreatePostPage from "./pages/CreatePostPage";
+import BookingCalendar from "./pages/BookingCalendar";
+
+import ArtistDashboard from "./pages/ArtistDashboard";
+//import ArtistProfile from "./pages/ArtistProfile";
+import JobPostForm from "./pages/JobPostForm";
+import ClientPostsPage from "./pages/ClientPostsPage"
+// import ArtistBookingForm from "./pages/ArtistBooking";
+// import ClientPostsPage from "./pages/ClientPostsPage";
+import CreatePostPage from "./pages/CreatePostPage";
+// import BookingCalendar from "./pages/BookingCalendar";
+
+// import ArtistDashboard from "./pages/ArtistDashboard";
+import ArtistProfile from "./pages/ArtistProfile";
+
+// import JobPostForm from "./pages/JobPostForm";
+import SearchResult from "./pages/SearchResult";
+import AdminApp from "./Admin/AdminApp";
+import Dashboard from "./Admin/pages/Dashboard";
+import Artist from "./Admin/pages/Artist";
+import MyBookings from "./pages/MyBookings";
+
+// import ArtistProfile from "./pages/ArtistProfile";
+
+
+// import SearchResult from "./pages/SearchResult";
 
 import { Toaster } from "react-hot-toast";
+import AdminLogin from "./Admin/AdminLogin";
+import Client from "./Admin/pages/Client";
+import ProtectedAdminRoute from "./Admin/ProtectedAdminRoute";
 import PrivateRoute from "./pages/PrivateRoute";
 //import EditArtistProfile from "./pages/EditArtistProfile";
 import ArtistProfilee from "./pages/ArtistPages";
@@ -118,7 +148,7 @@ function App() {
 
 
 
-          <Route path="/job-post" element={<JobPostForm />} />
+          <Route path="/post" element={<JobPostForm />} />
           <Route path="/posts" element={<ClientPostsPage />} />
           <Route path="/artist-booking" element={<ArtistBookingForm/>}/>
           <Route path="/my-bookings" element={<MyBookings/>}/>
@@ -127,7 +157,21 @@ function App() {
           {/* <Route path="/artistpage" element={<ArtistProfilee />} />
           <Route path="/editartist" element={<PrivateRoute><EditArtist /></PrivateRoute>} /> */}
 
-          
+                    <Route path="/admin-login" element={<AdminLogin />} />
+
+          <Route path="/admin/*" element={ 
+            <ProtectedAdminRoute>
+                <AdminApp />
+            </ProtectedAdminRoute>
+            } 
+          >
+              
+             <Route index element={<Dashboard /> }/>
+            <Route path="artists" element={<Artist /> }/> 
+            <Route path="clients" element={<Client /> }/> 
+          </Route>
+
+
         </Routes>     
       </Router> 
       
