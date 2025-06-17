@@ -89,7 +89,7 @@ const AdminDashboard = () => {
           </div>
           <button
             onClick={() => navigate("/admin/clients")}
-            className="mt-4 bg-purple-400 bg-gradient-to-b hover:bg-[#3ee6e6] text-black py-2 rounded-md transition"
+            className="mt-4 bg-purple-400 bg-gradient-to-b hover:bg-purple-700 text-black py-2 rounded-md transition"
           >
             Manage Clients
           </button>
@@ -99,11 +99,11 @@ const AdminDashboard = () => {
         <div className="bg-white shadow rounded-lg p-6 flex flex-col justify-between">
           <div>
             <h2 className="text-xl font-medium text-gray-700 mb-2">Artists</h2>
-            <p className="text-4xl font-bold text-[#3ee6e6]">{artistsCount}</p>
+            <p className="text-4xl font-bold text-purple-700">{artistsCount}</p>
           </div>
           <button
             onClick={() => navigate("/admin/artists")}
-            className="mt-4 bg-[#5ff7f7] hover:bg-[#3ee6e6] text-black py-2 rounded-md transition"
+            className="mt-4 bg-purple-400 hover:bg-purple-700 text-black py-2 rounded-md transition"
           >
             Manage Artists
           </button>
