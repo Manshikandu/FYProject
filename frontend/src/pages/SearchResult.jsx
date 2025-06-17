@@ -10,7 +10,7 @@ const SearchResult = () => {
   useEffect(() => {
     if (query) {
       axios
-        .get(`http://localhost:5000/api/artist/search?query=${encodeURIComponent(query)}`)
+        .get(`http://localhost:3000/api/artist/search?query=${encodeURIComponent(query)}`)
         .then(res => setResults(res.data))
         .catch(err => console.error("Search error:", err));
     }
