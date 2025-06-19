@@ -37,10 +37,39 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6 text-lg">
-            <Link to="/" className="hover:text-[#3ee6e6] transition-colors">Home</Link>
-            <Link to="/about" className="hover:text-[#3ee6e6] transition-colors">About</Link>
-            <Link to="/category" className="hover:text-[#3ee6e6] transition-colors">Category</Link>
-            <Link to="/post" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
+           <button
+              onClick={() => {
+                navigate('/');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="hover:text-[#3ee6e6] transition-colors"
+            >
+              Home
+            </button>
+
+            <button
+              onClick={() => {
+                const footer = document.getElementById('footer');
+                if (footer) {
+                  footer.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="hover:text-[#3ee6e6] transition-colors"
+            >
+              About
+            </button>
+           <button
+              onClick={() => {
+  navigate('/', { state: { scrollTo: 'categories' } });
+}}
+
+              className="hover:text-[#3ee6e6] transition-colors"
+            >
+              Category
+            </button>
+
+
+            <Link to="/job-post" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
 
             {/* Search */}
             <div className="relative ">
@@ -129,9 +158,42 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {menuOpen && (
           <div className="md:hidden flex flex-col gap-4 py-4">
-            <Link to="/" className="hover:text-[#3ee6e6] transition-colors">Home</Link>
-            <Link to="/about" className="hover:text-[#3ee6e6] transition-colors">About</Link>
-            <Link to="/category" className="hover:text-[#3ee6e6] transition-colors">Category</Link>
+            <button
+              onClick={() => {
+                setMenuOpen(false); // Close mobile menu
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="hover:text-[#3ee6e6] transition-colors text-left"
+            >
+              Home
+            </button>
+
+            <button
+              onClick={() => {
+                setMenuOpen(false); // close menu first
+                const footer = document.getElementById('footer');
+                if (footer) {
+                  footer.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="hover:text-[#3ee6e6] transition-colors text-left"
+            >
+              About
+            </button>
+
+           <button
+              onClick={() => {
+                setMenuOpen(false); // Close mobile menu
+                const section = document.getElementById('categories');
+                if (section) {
+                  section.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="hover:text-[#3ee6e6] transition-colors text-left"
+            >
+              Category
+            </button>
+
             <Link to="/post" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
 
             <div className="relative">
