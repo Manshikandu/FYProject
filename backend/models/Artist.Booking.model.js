@@ -10,7 +10,7 @@ const BookingSchema = new mongoose.Schema(
     artist: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: "Artist", 
-      required: true 
+      required: true  
     }, 
     eventDate: { type: Date, required: true },
     startTime: { type: Date, required: true },
