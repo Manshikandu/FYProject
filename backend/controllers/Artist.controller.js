@@ -227,3 +227,37 @@ export const searchArtist = async (req, res) => {
 
 
 
+
+//filter
+
+// import { haversineDistance } from "../utils/calculateDistance.js";
+
+// exports.getNearbyArtists = async (req, res) => {
+//   const { lat, lon, maxDistance = 50 } = req.query;
+//   if (!lat || !lon) return res.status(400).json({ error: "Missing coordinates" });
+
+//   try {
+//     const artists = await Artist.find({ latitude: { $ne: null }, longitude: { $ne: null } });
+
+//     const filtered = artists
+//       .map((artist) => {
+//         const dist = haversineDistance(
+//           parseFloat(lat),
+//           parseFloat(lon),
+//           artist.latitude,
+//           artist.longitude
+//         );
+//         return { ...artist._doc, distance: dist };
+//       })
+//       .filter((a) => a.distance <= maxDistance)
+//       .sort((a, b) => a.distance - b.distance);
+
+//     res.json(filtered);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// };
+
+
+

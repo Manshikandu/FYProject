@@ -78,3 +78,16 @@ export const deleteJobPost = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+//getLLjobposts
+export const getAllJobPosts = async (req, res) => {
+  try {
+    const posts = await JobPost.find().sort({ createdAt: -1 });
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error("Error fetching job posts:", error);
+    res.status(500).json({ message: "Server error fetching job posts" });
+  }
+};
+
