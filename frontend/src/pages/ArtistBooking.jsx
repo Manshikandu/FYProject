@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Button } from "../components/ui/Button";
 import { BookCard, BookCardContent } from "../components/ui/BookCard";
@@ -33,6 +33,8 @@ const ArtistBookingForm = () => {
 
   const location = useLocation();
   const [selectedArtistId, setSelectedArtistId] = useState(null);
+  const navigate = useNavigate();
+
 
    useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -120,7 +122,7 @@ const ArtistBookingForm = () => {
   try {
     // Assuming you have these values from your form state:
     const bookingData = {
-      artist: selectedArtistId,              // you must get this somehow
+      artistId: selectedArtistId,              // you must get this somehow
       eventDate: formData.date.toISOString(), 
       startTime: formData.startTime.toISOString(), 
       endTime: formData.endTime.toISOString(),
@@ -163,9 +165,10 @@ const ArtistBookingForm = () => {
       phone: "",
       notes: "",
     });
-    setStep(0); // Reset the form step to the first step
+    setStep(0); 
   } else {
     toast.error("Failed to create booking.");
+    navigate(`/artist/${selectedArtistId}`);
   }
   }
   catch (error) {
@@ -223,8 +226,7 @@ const ArtistBookingForm = () => {
         </div>
 
         <BookCardContent>
-          {step === 0 && (
-            <div className="flex flex-wrap gap-4 mb-70">
+          {step === 0 && (<div className="flex flex-wrap gap-4 mb-70">
               {/* Date */}
               <div className="flex-1">
                 <label className="block mb-2">Date</label>

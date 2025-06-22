@@ -32,13 +32,13 @@ const WelcomeScreen = () => {
           <h2 className="text-2xl font-semibold mb-8 ">Are you</h2>
           <button
             onClick={handleClientClick}
-           className="w-full bg-[#1da1f2] text-white py-2 rounded-full mb-4 hover:bg-[#3EBDC6] transition">
+           className="w-full bg-purple-800 text-white py-2 rounded-full mb-4 hover:bg-purple-400 transition">
             Client
           </button>
           <div className="mb-4 font-medium text-gray-600">Or</div>
           <button
           onClick={handleArtistClick}
-           className="w-full bg-[#1da1f2] text-white py-2 rounded-full hover:bg-[#3EBDC6] transition">
+           className="w-full bg-purple-800 text-white py-2 rounded-full hover:bg-purple-400 transition">
             Artist
           </button>
         </div>
