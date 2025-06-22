@@ -1,5 +1,7 @@
+// Layout.jsx---------------------------------------------
+
 // components/Layout.jsx
-import React from 'react';
+//import React from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { Outlet, useLocation } from 'react-router-dom';
@@ -21,4 +23,4 @@ const Layout = () => {
   );
 };
 
-export default Layout;
+ export default Layout;
