@@ -4,6 +4,8 @@ import CategorySection from '../components/CategorySection';
 
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 
 
@@ -22,9 +24,10 @@ useEffect(() => {
 }, [location]);
   return (
     <>
-      
+      <Navbar />
       <Slider />
       <CategorySection />
+      <Footer />
 
     </>
   );
