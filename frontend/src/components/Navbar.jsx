@@ -27,7 +27,7 @@ const Navbar = () => {
   
 
   return (
-    <header className="fixed top-0 left-0 w-full bg-[#d9f3ea] shadow-md z-50 ">
+    <header className="fixed top-0 left-0 w-full bg-purple-300 shadow-md z-50 ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-3">
         <nav className="flex items-center justify-between py-4">
           
@@ -42,7 +42,7 @@ const Navbar = () => {
                 navigate('/');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="hover:text-[#3ee6e6] transition-colors"
+              className="hover:text-purple-500 transition-colors"
             >
               Home
             </button>
@@ -54,7 +54,7 @@ const Navbar = () => {
                   footer.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
-              className="hover:text-[#3ee6e6] transition-colors"
+              className="hover:text-purple-500 transition-colors"
             >
               About
             </button>
@@ -63,13 +63,17 @@ const Navbar = () => {
   navigate('/', { state: { scrollTo: 'categories' } });
 }}
 
-              className="hover:text-[#3ee6e6] transition-colors"
+              className="hover:text-purple-500 transition-colors"
             >
               Category
             </button>
 
 
-            <Link to="/job-post" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
+            {/* <Link to="/posts" className="hover:text-[#3ee6e6] transition-colors">Post</Link> */}
+            {user && (
+           <Link to="/posts" className="hover:text-purple-500 transition-colors">Post</Link>
+           )}
+
 
             {/* Search */}
             <div className="relative ">
@@ -90,7 +94,7 @@ const Navbar = () => {
               <div className="relative flex items-center gap-5">
                 <Link
                   to="/notifications"
-                  className="relative flex items-center px-3 py-3 rounded-full text-cyan-400 hover:text-black transition"
+                  className="relative flex items-center px-3 py-3 rounded-full text-purple-500 hover:text-black transition"
                   aria-label="Notifications"
                 >
                   <Bell />
@@ -99,7 +103,7 @@ const Navbar = () => {
                 {/* New Booking Button */}
                 <button
                   onClick={() => navigate('/my-bookings')}
-                  className="flex items-center px-3 py-3 rounded-full text-black hover:text-[#3ee6e6] transition "
+                  className="flex items-center px-3 py-3 rounded-full text-black hover:text-purple-500 transition "
                   aria-label="My Bookings"
                   title="My Bookings"
                 >
@@ -109,7 +113,7 @@ const Navbar = () => {
                 <div className="relative">
                   <button
                     onClick={() => setUserDropdown(!userDropdown)}
-                    className="flex items-center px-3 py-3 rounded-full bg-black hover:bg-cyan-400 text-white transition"
+                    className="flex items-center px-3 py-3 rounded-full bg-black hover:bg-purple-500 text-white transition"
                     aria-label="User menu"
                   >
                     <User size={18} />
@@ -130,7 +134,7 @@ const Navbar = () => {
               <>
                 <Link
                   to="/signup-select"
-                  className="bg-[#5ff7f7] hover:bg-[#3ee6e6] text-black font-medium py-1 px-4 rounded-full transition-colors"
+                  className="bg-purple-500 hover:bg-purple text-black font-medium py-1 px-4 rounded-full transition-colors"
                 >
                   Sign Up
                 </Link>
@@ -194,7 +198,11 @@ const Navbar = () => {
               Category
             </button>
 
-            <Link to="/post" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
+            {/* <Link to="/post" className="hover:text-[#3ee6e6] transition-colors">Post</Link> */}
+            {user && (
+             <Link to="/posts" className="hover:text-[#3ee6e6] transition-colors">Post</Link>
+            )}
+
 
             <div className="relative">
               <input
@@ -231,7 +239,7 @@ const Navbar = () => {
               <>
                 <Link
                   to="/signup"
-                  className="bg-[#5ff7f7] hover:bg-[#3ee6e6] text-black w-30 font-md py-2 px-4 rounded-full transition-colors text-center"
+                  className="bg-purple-400 hover:bg-purple-900 text-black w-30 font-md py-2 px-4 rounded-full transition-colors text-center"
                 >
                   Sign Up
                 </Link>

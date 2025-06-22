@@ -41,12 +41,7 @@ const Slider = () => {
           >
             Ready to explore artists and make your event unforgettable?
           </motion.p>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="px-6 py-2 bg-[#5ff3f3] text-black rounded-full text-lg font-semibold shadow-md"
-          >
-            Go to Dashboard
-          </button>
+          
         </div>
 
         {/* Right: Illustration */}
@@ -86,12 +81,7 @@ const Slider = () => {
       <div className="absolute inset-0 flex flex-col justify-center items-start px-8 text-white bg-gradient-to-r from-black/50 to-transparent">
         <h1 className="text-4xl md:text-5xl font-bold mb-3">Discover. Connect. Celebrate.</h1>
         <p className="text-lg md:text-xl mb-6 max-w-xl">Book talented artists for your events today.</p>
-        <button
-          onClick={() => navigate('/signup-select')}
-          className="bg-[#5ff3f3] text-black font-semibold px-6 py-2 rounded-full shadow-lg"
-        >
-          Get Started
-        </button>
+        
       </div>
     </div>
   );
