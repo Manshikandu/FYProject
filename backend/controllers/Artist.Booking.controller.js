@@ -1,17 +1,26 @@
 import Booking from "../models/Artist.Booking.model.js";
-import Artist from "../models/Artist.model.js"; 
-import User from "../models/user.model.js"; 
+import Artist from "../models/Artist.model.js";
 
-export const bookingArtist = async (req, res) => {
+
+export const createBooking = async (req, res) => {
   try {
-    const {name, email, phone, date, startTime, endTime, location, coordinates, eventType, eventDetails, notes, artistId } = req.body;
+    const {
+      eventDate,
+      startTime,
+      endTime,
+      location,
+      coordinates,
+      contactName,
+      contactEmail,
+      contactPhone,
+      eventType,
+      eventDetails,
+      notes,
+      artistId, 
+    } = req.body;
 
-    const clientId = req.user ? req.user._id : null; 
+    const clientId = req.user._id;
 
-    if (!name || !email || !date || !location || !artistId) 
-    {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
 
     const artistExists = await Artist.findById(artistId);
     if (!artistExists) {
@@ -19,67 +28,58 @@ export const bookingArtist = async (req, res) => {
     }
 
     const newBooking = new Booking({
-      name,
-      email,
-      phone,
-      date,
+      client: clientId,
+      artist: artistId,
+      eventDate,
       startTime,
       endTime,
       location,
       coordinates,
+      contactName,
+      contactEmail,
+      contactPhone,
       eventType,
       eventDetails,
       notes,
-      artistId,
-      clientId,
       status: "pending",
     });
 
     await newBooking.save();
-    res.status(201).json({ message: "Booking request submitted", booking: newBooking });
-  } 
-  catch (error) 
-  {
-    console.error("Error booking artist:", error);
-    res.status(500).json({ message: "Internal server error" });
+
+    res.status(201).json({
+      message: "Booking request sent successfully",
+      booking: newBooking,
+    });
+  } catch (error) {
+    console.error("Create booking error:", error);
+    res.status(500).json({ message: "Server error while creating booking" });
   }
 };
 
 
-
-export const getBookingRequest = async (req, res) => {
+export const getMyBookings = async (req, res) => {
   try {
-    const { artistId } = req.params;
+    const userId = req.user.id; //  set by verifytoken middleware
 
-    const bookings = await Booking.find({ artistId }).sort({ createdAt: -1 });
+    let bookings;
+
+
+    if (req.user.role === "client") {
+      bookings = await Booking.find({ client: userId })
+
+        .populate("artist", "username email phone")
+        .sort({ createdAt: -1 });
+    } else if (req.user.role === "artist") {
+      bookings = await Booking.find({ "artist": userId })
+        .populate("client", "username email phone")
+        .sort({ createdAt: -1 });
+    } else {
+      return res.status(403).json({ error: "Invalid role" });
+    }
+
     res.json(bookings);
-  } catch (error) {
-    console.error("Error fetching bookings:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-
-export const BookingStatus = async (req, res) => {
-  try {
-    const { bookingId } = req.params;
-    const { status } = req.body; // expected: "pending", "accepted", "rejected", "completed"
-
-    if (!["pending", "accepted", "rejected", "completed"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
-    }
-
-    const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    booking.status = status;
-    await booking.save();
-
-    res.json({ message: "Booking status updated", booking });
-  } catch (error) {
-    console.error("Error updating booking status:", error);
-    res.status(500).json({ message: "Internal server error" });
+  } catch (err) {
+    console.error("Error fetching bookings:", err);
+    res.status(500).json({ error: "Server error while fetching bookings" });
   }
 };
