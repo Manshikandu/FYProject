@@ -1,9 +1,7 @@
 
 import Slider from '../components/Slider';
 import CategorySection from '../components/CategorySection';
-// import NavBar from '../components/NavBar';
 
-// import Footer from '../components/Footer';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -27,7 +25,7 @@ useEffect(() => {
       
       <Slider />
       <CategorySection />
-      {/* <Footer /> */}
+
     </>
   );
 };

@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+
+import { useEffect, useState } from "react";
 import axios from "../lib/axios";
 import { useUserStore } from "../stores/useUserStore";
 import {
@@ -23,13 +25,10 @@ const statusStyles = {
   cancelled: { color: "text-red-500", icon: <XCircle className="w-5 h-5 mr-1" />, label: "Cancelled" },
 };
 
-const statusOptions = ["all", "pending", "accepted", "booked", "completed", "cancelled"];
-
 const MyBookings = () => {
   const { user } = useUserStore();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
     if (!user) return;
@@ -54,33 +53,16 @@ const MyBookings = () => {
       </div>
     );
 
-  // Filter bookings by status
-  const filteredBookings =
-    filterStatus === "all"
-      ? bookings
-      : bookings.filter((b) => b.status === filterStatus);
-
-  if (filteredBookings.length === 0)
+  if (bookings.length === 0)
     return (
-      <>
-        <StatusFilter filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
-        <p className="text-center mt-10 text-gray-500 text-lg">No bookings found for "{filterStatus}" status.</p>
-      </>
+      <p className="text-center mt-10 text-gray-500 text-lg">You have no bookings yet.</p>
     );
 
   return (
     <div className="max-w-4xl mx-auto p-6 mt-16">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">My Bookings</h2>
 
-      <StatusFilter filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
-
-      {filteredBookings.map((booking) => {
-        // Show opposite party name
-        const bookingName =
-          user.role === "client"
-            ? booking.artist?.username || "Artist"
-            : booking.client?.username || "Client";
-
+      {bookings.map((booking) => {
         const status = statusStyles[booking.status] || {
           color: "text-gray-700",
           icon: null,
@@ -94,25 +76,19 @@ const MyBookings = () => {
           >
             <h3 className="text-xl font-semibold mb-3 flex items-center text-indigo-700">
               <User className="w-6 h-6 mr-2" />
-              {bookingName}
+              {booking.name || "Client Name"}
             </h3>
 
             <div className="flex flex-wrap gap-4 text-gray-700 text-sm mb-3">
               <div className="flex items-center">
                 <Calendar className="w-5 h-5 mr-1 text-indigo-500" />
-                {new Date(booking.eventDate).toLocaleDateString()}
+                {new Date(booking.date).toLocaleDateString()}
               </div>
 
               <div className="flex items-center">
                 <Clock className="w-5 h-5 mr-1 text-indigo-500" />
-                {booking.startTime && booking.endTime
-                  ? `${new Date(booking.startTime).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })} - ${new Date(booking.endTime).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}`
+                {booking.startTime
+                  ? `${new Date(booking.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(booking.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
                   : "Time not set"}
               </div>
 
@@ -123,32 +99,17 @@ const MyBookings = () => {
                 </div>
               )}
 
-              {/* Show contact info of the other party */}
-              {user.role === "client" && booking.artist?.email && (
+              {booking.email && (
                 <div className="flex items-center">
                   <Mail className="w-5 h-5 mr-1 text-indigo-500" />
-                  {booking.artist.email}
+                  {booking.email}
                 </div>
               )}
 
-              {user.role === "client" && booking.artist?.phone && (
+              {booking.phone && (
                 <div className="flex items-center">
                   <Phone className="w-5 h-5 mr-1 text-indigo-500" />
-                  {booking.artist.phone}
-                </div>
-              )}
-
-              {user.role === "artist" && booking.client?.email && (
-                <div className="flex items-center">
-                  <Mail className="w-5 h-5 mr-1 text-indigo-500" />
-                  {booking.client.email}
-                </div>
-              )}
-
-              {user.role === "artist" && booking.client?.phone && (
-                <div className="flex items-center">
-                  <Phone className="w-5 h-5 mr-1 text-indigo-500" />
-                  {booking.client.phone}
+                  {booking.phone}
                 </div>
               )}
             </div>
@@ -181,25 +142,5 @@ const MyBookings = () => {
     </div>
   );
 };
-
-function StatusFilter({ filterStatus, setFilterStatus }) {
-  return (
-    <div className="mb-6 flex flex-wrap gap-3 justify-center">
-      {statusOptions.map((status) => (
-        <button
-          key={status}
-          onClick={() => setFilterStatus(status)}
-          className={`px-4 py-2 rounded-full border ${
-            filterStatus === status
-              ? "bg-indigo-600 text-white border-indigo-600"
-              : "text-indigo-600 border-indigo-600 hover:bg-indigo-100"
-          } transition`}
-        >
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 export default MyBookings;
