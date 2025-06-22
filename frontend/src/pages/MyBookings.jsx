@@ -1,6 +1,4 @@
-import React from "react";
-
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "../lib/axios";
 import { useUserStore } from "../stores/useUserStore";
 import {
@@ -22,13 +20,17 @@ const statusStyles = {
   accepted: { color: "text-blue-500", icon: <CheckCircle className="w-5 h-5 mr-1" />, label: "Accepted" },
   booked: { color: "text-green-600", icon: <CheckCircle className="w-5 h-5 mr-1" />, label: "Booked" },
   completed: { color: "text-gray-500", icon: <Flag className="w-5 h-5 mr-1" />, label: "Completed" },
+    rejected: { color: "text-red-600", icon: <XCircle className="w-5 h-5 mr-1" />, label: "Rejected" },
   cancelled: { color: "text-red-500", icon: <XCircle className="w-5 h-5 mr-1" />, label: "Cancelled" },
 };
+
+const statusOptions = ["all", "pending", "accepted", "booked", "completed", "rejected", "cancelled"];
 
 const MyBookings = () => {
   const { user } = useUserStore();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
     if (!user) return;
@@ -53,16 +55,33 @@ const MyBookings = () => {
       </div>
     );
 
-  if (bookings.length === 0)
+  // Filter bookings by status
+  const filteredBookings =
+    filterStatus === "all"
+      ? bookings
+      : bookings.filter((b) => b.status === filterStatus);
+
+  if (filteredBookings.length === 0)
     return (
-      <p className="text-center mt-10 text-gray-500 text-lg">You have no bookings yet.</p>
+      <>
+        <StatusFilter filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
+        <p className="text-center mt-10 text-gray-500 text-lg">No bookings found for "{filterStatus}" status.</p>
+      </>
     );
 
   return (
     <div className="max-w-4xl mx-auto p-6 mt-16">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">My Bookings</h2>
 
-      {bookings.map((booking) => {
+      <StatusFilter filterStatus={filterStatus} setFilterStatus={setFilterStatus} />
+
+      {filteredBookings.map((booking) => {
+        // Show opposite party name
+        const bookingName =
+          user.role === "client"
+            ? booking.artist?.username || "Artist"
+            : booking.client?.username || "Client";
+
         const status = statusStyles[booking.status] || {
           color: "text-gray-700",
           icon: null,
@@ -76,19 +95,25 @@ const MyBookings = () => {
           >
             <h3 className="text-xl font-semibold mb-3 flex items-center text-indigo-700">
               <User className="w-6 h-6 mr-2" />
-              {booking.name || "Client Name"}
+              {bookingName}
             </h3>
 
             <div className="flex flex-wrap gap-4 text-gray-700 text-sm mb-3">
               <div className="flex items-center">
                 <Calendar className="w-5 h-5 mr-1 text-indigo-500" />
-                {new Date(booking.date).toLocaleDateString()}
+                {new Date(booking.eventDate).toLocaleDateString()}
               </div>
 
               <div className="flex items-center">
                 <Clock className="w-5 h-5 mr-1 text-indigo-500" />
-                {booking.startTime
-                  ? `${new Date(booking.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(booking.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
+                {booking.startTime && booking.endTime
+                  ? `${new Date(booking.startTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })} - ${new Date(booking.endTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}`
                   : "Time not set"}
               </div>
 
@@ -99,17 +124,32 @@ const MyBookings = () => {
                 </div>
               )}
 
-              {booking.email && (
+              {/* Show contact info of the other party */}
+              {user.role === "client" && booking.artist?.email && (
                 <div className="flex items-center">
                   <Mail className="w-5 h-5 mr-1 text-indigo-500" />
-                  {booking.email}
+                  {booking.artist.email}
                 </div>
               )}
 
-              {booking.phone && (
+              {user.role === "client" && booking.artist?.phone && (
                 <div className="flex items-center">
                   <Phone className="w-5 h-5 mr-1 text-indigo-500" />
-                  {booking.phone}
+                  {booking.artist.phone}
+                </div>
+              )}
+
+              {user.role === "artist" && booking.client?.email && (
+                <div className="flex items-center">
+                  <Mail className="w-5 h-5 mr-1 text-indigo-500" />
+                  {booking.client.email}
+                </div>
+              )}
+
+              {user.role === "artist" && booking.client?.phone && (
+                <div className="flex items-center">
+                  <Phone className="w-5 h-5 mr-1 text-indigo-500" />
+                  {booking.client.phone}
                 </div>
               )}
             </div>
@@ -136,11 +176,49 @@ const MyBookings = () => {
             <div className={`text-lg font-semibold flex items-center ${status.color}`}>
               {status.icon} {status.label}
             </div>
+
+
+
+            
+            {booking.status === "accepted" && (!booking.contractStatus || booking.contractStatus === "none") && (
+  <button
+    onClick={() => {
+      // Navigate to contract generation page or open modal
+      window.location.href = `/generate-contract/${booking._id}`;
+      // Or if you want to call API directly, add your handler here
+    }}
+    className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition"
+  >
+    Generate Contract
+  </button>
+)}
           </div>
         );
       })}
+      
     </div>
   );
 };
+
+function StatusFilter({ filterStatus, setFilterStatus }) {
+  return (
+    <div className="mb-6 flex flex-wrap gap-3 justify-center">
+      {statusOptions.map((status) => (
+        <button
+          key={status}
+          onClick={() => setFilterStatus(status)}
+          className={`px-4 py-2 rounded-full border ${
+            filterStatus === status
+              ? "bg-indigo-600 text-white border-indigo-600"
+              : "text-indigo-600 border-indigo-600 hover:bg-indigo-100"
+          } transition`}
+        >
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </button>
+      ))}
+      
+    </div>
+  );
+}
 
 export default MyBookings;

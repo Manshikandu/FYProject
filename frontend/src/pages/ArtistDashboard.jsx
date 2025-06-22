@@ -23,8 +23,8 @@ export default function ArtistDashboard() {
         <nav className="flex justify-between items-center mb-6">
           <div className="text-xl font-bold">Dashboard</div>
           <div className="space-x-16">
-          <Link to="/bookings" className="hover:text-[#1A237E] shadow-2xl">Bookings</Link>
-          <Link to="/availability" className="hover:text-[#1A237E] shadow-2xl">Availability</Link>
+          <Link to="/artist-bookings" className="hover:text-[#1A237E] shadow-2xl">Bookings</Link>
+          <Link to="/post" className="hover:text-[#1A237E] shadow-2xl">Posts</Link>
           <Link to="/profile" className="hover:text-[#1A237E] shadow-2xl">Profile</Link>
 
           </div>
