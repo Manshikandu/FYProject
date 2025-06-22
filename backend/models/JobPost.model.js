@@ -6,7 +6,7 @@ const jobPostSchema = new mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String, required: true },
     date: { type: Date, required: true },
-    time: { type: String, required: true },
+    time: { type: Date, required: true },
     location: {
       city: { type: String, required: true },
       state: { type: String },
