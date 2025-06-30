@@ -1,25 +1,31 @@
 
-// edit artist page
+//with loc
 import React, { useState } from "react";
 import { useUserStore } from "../stores/useUserStore";
 import { useNavigate } from "react-router-dom";
 import { uploadMedia } from "../components/utlis/UploadMedia.js";
 
+const GENRE_OPTIONS = ["Pop", "Jazz", "Rock", "Hip-hop", "Classical", "Folk"];
+const EVENT_OPTIONS = ["Wedding", "Concert", "Corporate", "Festival", "Private"];
+const LANGUAGE_OPTIONS = ["English", "Nepali", "Hindi", "Newari"];
+
 export default function EditArtist() {
   const { user: artist, setUser } = useUserStore();
   const navigate = useNavigate();
 
-  // Convert portfolioLink array to a comma-separated string for easier editing
   const portfolioString = artist?.portfolioLink?.map((p) => p.url).join(", ") || "";
 
   const [formData, setFormData] = useState({
     username: artist?.username || "",
-    location: artist?.location || "",
+    location: artist?.location?.city || "",
     category: artist?.category || "",
     portfolio: portfolioString,
-    videoUrl: artist?.videoUrl || "", // optional field, keep if you want
+    videoUrl: artist?.videoUrl || "",
     bio: artist?.bio || "",
     wage: artist?.wage || 1000,
+    genres: artist?.genres || [],
+    eventTypes: artist?.eventTypes || [],
+    languages: artist?.languages || [],
   });
 
   const [mediaFiles, setMediaFiles] = useState([]);
@@ -37,6 +43,21 @@ export default function EditArtist() {
     setProfileImageFile(e.target.files[0]);
   };
 
+  const getCoordinates = async (city) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`
+      );
+      const data = await response.json();
+      if (data.length > 0) {
+        return [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+      }
+    } catch (error) {
+      console.error("Geocoding failed:", error);
+    }
+    return [85.3240, 27.7172]; // default to Kathmandu if failed
+  };
+
   const saveChanges = async () => {
     try {
       const mediaUrls = [];
@@ -52,7 +73,12 @@ export default function EditArtist() {
         profilePictureUrl = await uploadMedia(profileImageFile);
       }
 
-      // Convert portfolio string back to array of objects [{url, type: 'link'}]
+      const loc = {
+        type: "Point",
+        coordinates: await getCoordinates(formData.location),
+        city: formData.location,
+      };
+
       const portfolioLink = formData.portfolio
         .split(",")
         .map((url) => url.trim())
@@ -64,13 +90,16 @@ export default function EditArtist() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: formData.username,
-          location: formData.location,
+          location: loc,
           category: formData.category.toLowerCase(),
           bio: formData.bio,
           wage: Number(formData.wage),
           profilePicture: { url: profilePictureUrl },
           portfolioLink,
           media: [...(artist.media || []), ...mediaUrls],
+          genres: formData.genres,
+          eventTypes: formData.eventTypes,
+          languages: formData.languages,
         }),
       });
 
@@ -109,44 +138,93 @@ export default function EditArtist() {
               </option>
             ))}
           </select>
-          <Input
-            label="Portfolio URLs (comma separated)"
-            name="portfolio"
-            value={formData.portfolio}
-            onChange={handleChange}
-          />
-          <Input
-            label="Rate (wage)"
-            name="wage"
-            type="number"
-            value={formData.wage}
-            onChange={handleChange}
-          />
-          {/* Optional video URL input */}
+          <Input label="Portfolio URLs (comma separated)" name="portfolio" value={formData.portfolio} onChange={handleChange} />
+          <Input label="Rate (wage)" name="wage" type="number" value={formData.wage} onChange={handleChange} />
           <Input label="Video URL" name="videoUrl" value={formData.videoUrl} onChange={handleChange} />
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Upload Profile Image</label>
             <input type="file" accept="image/*" onChange={handleProfileImageUpload} />
             {artist?.profilePicture?.url && !profileImageFile && (
-              <img
-                src={artist.profilePicture.url}
-                alt="Profile Preview"
-                className="mt-2 w-24 h-24 rounded-full object-cover"
-              />
+              <img src={artist.profilePicture.url} alt="Profile Preview" className="mt-2 w-24 h-24 rounded-full object-cover" />
             )}
             {profileImageFile && (
-              <img
-                src={URL.createObjectURL(profileImageFile)}
-                alt="New Profile Preview"
-                className="mt-2 w-24 h-24 rounded-full object-cover"
-              />
+              <img src={URL.createObjectURL(profileImageFile)} alt="New Profile Preview" className="mt-2 w-24 h-24 rounded-full object-cover" />
             )}
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Upload Media</label>
             <input type="file" accept="image/*,video/*" multiple onChange={handleMediaUpload} />
+          </div>
+
+          <div className="col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Genres</label>
+            <div className="flex flex-wrap gap-2">
+              {GENRE_OPTIONS.map((genre) => (
+                <label key={genre} className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
+                    checked={formData.genres.includes(genre)}
+                    onChange={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        genres: prev.genres.includes(genre)
+                          ? prev.genres.filter((g) => g !== genre)
+                          : [...prev.genres, genre],
+                      }));
+                    }}
+                  />
+                  <span>{genre}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Event Types</label>
+            <div className="flex flex-wrap gap-2">
+              {EVENT_OPTIONS.map((event) => (
+                <label key={event} className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
+                    checked={formData.eventTypes.includes(event)}
+                    onChange={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        eventTypes: prev.eventTypes.includes(event)
+                          ? prev.eventTypes.filter((e) => e !== event)
+                          : [...prev.eventTypes, event],
+                      }));
+                    }}
+                  />
+                  <span>{event}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Languages</label>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGE_OPTIONS.map((lang) => (
+                <label key={lang} className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
+                    checked={formData.languages.includes(lang)}
+                    onChange={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        languages: prev.languages.includes(lang)
+                          ? prev.languages.filter((l) => l !== lang)
+                          : [...prev.languages, lang],
+                      }));
+                    }}
+                  />
+                  <span>{lang}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -183,6 +261,5 @@ function Input({ label, ...rest }) {
     </div>
   );
 }
-
 
 
