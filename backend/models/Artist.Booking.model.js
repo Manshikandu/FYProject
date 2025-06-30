@@ -31,7 +31,23 @@ const BookingSchema = new mongoose.Schema(
       enum: ["pending", "accepted", "rejected", "booked", "completed", "cancelled"],
       default: "pending",
     },
+    // Contract related fields
+    totalHours: { type: Number },                   
+    wage: { type: Number },                         
+    clientSignature: { type: String },               
+    artistSignature: { type: String },              
+    contractStatus: {
+      type: String,
+      enum: ["none", "draft", "signed"],
+      default: "none",
+    },
+    contractUrl: { type: String },                    // URL to the generated PDF
+  clientSignatureDate: { type: Date },
+  artistSignatureDate: { type: Date },
+
   },
+  
+  
   { timestamps: true }
 );
 

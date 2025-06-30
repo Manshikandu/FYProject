@@ -1,11 +1,17 @@
 import express from "express";
-// import { getMyBookings } from "../controllers/Artist.Booking.controller.js";
-// import { protectRoute } from "../middleware/auth.middleware.js";
+import { createBooking, getMyBookings,getBookedSlotsForArtist, getBookingById } from "../controllers/Artist.Booking.controller.js";
+import { verifytoken } from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
-// Protected routes, user must be logged in
-// router.post("/", protectRoute, createBooking);
-// router.get("/my-bookings", protectRoute, getMyBookings);
+router.post("/", verifytoken, createBooking);
+
+router.get("/my-bookings", verifytoken, getMyBookings);
+
+
+router.get("/artist/:artistId/booked-slots", getBookedSlotsForArtist);
+
+
+router.get("/:id", verifytoken, getBookingById);
 
 export default router;
