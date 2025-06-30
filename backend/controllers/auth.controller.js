@@ -92,7 +92,11 @@ export const artistSignup = async (req, res) => {
       phone,
       role: "artist",
       category,
-      location,
+     location: {
+    type: "Point",
+    coordinates: req.body.location.coordinates,
+    city: req.body.location.city,
+  },
     });
 
     await artist.save();
