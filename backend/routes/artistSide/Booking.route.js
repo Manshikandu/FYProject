@@ -4,8 +4,8 @@ import { verifytoken } from "../../middleware/verifyToken.js";
 
 const router = express.Router();
 
-router.get("/artist/my-bookings", verifytoken, getArtistBookings);
+router.get("/my-bookings", verifytoken, getArtistBookings);
 
-router.put("/artist/:bookingId/status",verifytoken, updateBookingStatus);
+router.put("/:bookingId/status",verifytoken, updateBookingStatus);
 
 export default router;
