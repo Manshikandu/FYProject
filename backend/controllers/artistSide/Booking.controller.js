@@ -1,9 +1,9 @@
 import Booking from "../../models/Artist.Booking.model.js";
 
 export const getArtistBookings = async (req, res) => {
-
   try {
     if (!req.user) {
+      console.log("No user in request");
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -15,10 +15,11 @@ export const getArtistBookings = async (req, res) => {
 
     res.status(200).json({ bookings });
   } catch (error) {
-    console.error(" Error in getArtistBookings:", error);
+    console.error("Error in getArtistBookings:", error); // log full error!
     res.status(500).json({ message: "Server error fetching bookings" });
   }
 };
+
 
 
 

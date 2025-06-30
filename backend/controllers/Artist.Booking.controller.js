@@ -19,6 +19,12 @@ export const createBooking = async (req, res) => {
       artistId, 
     } = req.body;
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+if (!emailRegex.test(contactEmail)) {
+  return res.status(400).json({ message: "Invalid email address." });
+}
+
+
     const clientId = req.user._id;
 
 
@@ -26,6 +32,48 @@ export const createBooking = async (req, res) => {
     if (!artistExists) {
       return res.status(404).json({ message: "Artist not found" });
     }
+
+//added
+       // Normalize eventDate to midnight for querying same day bookings
+    const eventDateStart = new Date(eventDate);
+    eventDateStart.setHours(0, 0, 0, 0);
+    const eventDateEnd = new Date(eventDate);
+    eventDateEnd.setHours(23, 59, 59, 999);
+
+    // Step 1: Fetch existing accepted/booked bookings on the same day for the artist
+    const existingBookings = await Booking.find({
+      artist: artistId,
+      eventDate: { $gte: eventDateStart, $lte: eventDateEnd },
+      status: { $in: ["accepted", "booked"] },
+    });
+
+    // Step 2: Check for any time overlap conflict
+    const newStart = new Date(startTime);
+    const newEnd = new Date(endTime);
+
+    // const isConflict = existingBookings.some(booking => {
+    //   const existingStart = new Date(booking.startTime);
+    //   const existingEnd = new Date(booking.endTime);
+    //   return newStart < existingEnd && existingStart < newEnd;
+    // });
+
+    const BUFFER_MINUTES = 30;
+const BUFFER_MS = BUFFER_MINUTES * 60 * 1000;
+
+const isConflict = existingBookings.some(booking => {
+  const existingStart = new Date(booking.startTime).getTime() - BUFFER_MS;
+  const existingEnd = new Date(booking.endTime).getTime() + BUFFER_MS;
+  const newStartTime = new Date(startTime).getTime();
+  const newEndTime = new Date(endTime).getTime();
+
+  return Math.max(existingStart, newStartTime) < Math.min(existingEnd, newEndTime);
+});
+
+    if (isConflict) {
+      return res.status(409).json({ message: "Booking conflict: The selected time slot is already booked." });
+    }
+//
+
 
     const newBooking = new Booking({
       client: clientId,
@@ -81,5 +129,58 @@ export const getMyBookings = async (req, res) => {
   } catch (err) {
     console.error("Error fetching bookings:", err);
     res.status(500).json({ error: "Server error while fetching bookings" });
+  }
+};
+
+
+//added
+// controllers/Artist.Booking.controller.js
+export const getBookedSlotsForArtist = async (req, res) => {
+  try {
+    const { artistId } = req.params;
+
+    const bookings = await Booking.find({
+      artist: artistId,
+      status: { $in: ["accepted", "booked"] },
+    }).select("eventDate startTime endTime status");  // Added status
+
+    res.status(200).json({ bookedSlots: bookings });
+  } catch (error) {
+    console.error("Error fetching booked slots:", error);
+    res.status(500).json({ message: "Server error fetching booked slots" });
+  }
+};
+
+
+
+
+// GET /bookings/:id
+export const getBookingById = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate("artist", "username email phone category") // only necessary fields
+      .populate("client", "username email phone");
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // console.log("Logged in user ID:", req.user?._id);
+    // console.log("Booking client ID:", booking.client._id.toString());
+    // console.log("Booking artist ID:", booking.artist._id.toString());
+    
+    const userIdStr = req.user._id.toString();
+
+    if (
+  booking.client._id.toString() !== userIdStr &&
+  booking.artist._id.toString() !== userIdStr
+) {
+  return res.status(403).json({ message: "Access denied to this booking" });
+}
+
+    res.json({ booking });
+  } catch (error) {
+    console.error("Error fetching booking:", error);
+    res.status(500).json({ message: "Error fetching booking details" });
   }
 };
