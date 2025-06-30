@@ -34,46 +34,36 @@ if (!emailRegex.test(contactEmail)) {
     }
 
 //added
-       // Normalize eventDate to midnight for querying same day bookings
     const eventDateStart = new Date(eventDate);
     eventDateStart.setHours(0, 0, 0, 0);
     const eventDateEnd = new Date(eventDate);
     eventDateEnd.setHours(23, 59, 59, 999);
 
-    // Step 1: Fetch existing accepted/booked bookings on the same day for the artist
+  
     const existingBookings = await Booking.find({
       artist: artistId,
       eventDate: { $gte: eventDateStart, $lte: eventDateEnd },
       status: { $in: ["accepted", "booked"] },
     });
 
-    // Step 2: Check for any time overlap conflict
     const newStart = new Date(startTime);
     const newEnd = new Date(endTime);
 
-    // const isConflict = existingBookings.some(booking => {
-    //   const existingStart = new Date(booking.startTime);
-    //   const existingEnd = new Date(booking.endTime);
-    //   return newStart < existingEnd && existingStart < newEnd;
-    // });
-
     const BUFFER_MINUTES = 30;
-const BUFFER_MS = BUFFER_MINUTES * 60 * 1000;
+    const BUFFER_MS = BUFFER_MINUTES * 60 * 1000;
 
-const isConflict = existingBookings.some(booking => {
-  const existingStart = new Date(booking.startTime).getTime() - BUFFER_MS;
-  const existingEnd = new Date(booking.endTime).getTime() + BUFFER_MS;
-  const newStartTime = new Date(startTime).getTime();
-  const newEndTime = new Date(endTime).getTime();
+    const isConflict = existingBookings.some(booking => {
+      const existingStart = new Date(booking.startTime).getTime() - BUFFER_MS;
+      const existingEnd = new Date(booking.endTime).getTime() + BUFFER_MS;
+      const newStartTime = new Date(startTime).getTime();
+      const newEndTime = new Date(endTime).getTime();
 
-  return Math.max(existingStart, newStartTime) < Math.min(existingEnd, newEndTime);
-});
+      return Math.max(existingStart, newStartTime) < Math.min(existingEnd, newEndTime);
+    });
 
     if (isConflict) {
       return res.status(409).json({ message: "Booking conflict: The selected time slot is already booked." });
     }
-//
-
 
     const newBooking = new Booking({
       client: clientId,
@@ -107,7 +97,7 @@ const isConflict = existingBookings.some(booking => {
 
 export const getMyBookings = async (req, res) => {
   try {
-    const userId = req.user.id; //  set by verifytoken middleware
+    const userId = req.user.id; 
 
     let bookings;
 
@@ -133,8 +123,6 @@ export const getMyBookings = async (req, res) => {
 };
 
 
-//added
-// controllers/Artist.Booking.controller.js
 export const getBookedSlotsForArtist = async (req, res) => {
   try {
     const { artistId } = req.params;
@@ -152,13 +140,10 @@ export const getBookedSlotsForArtist = async (req, res) => {
 };
 
 
-
-
-// GET /bookings/:id
 export const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate("artist", "username email phone category") // only necessary fields
+      .populate("artist", "username email phone category") 
       .populate("client", "username email phone");
 
     if (!booking) {

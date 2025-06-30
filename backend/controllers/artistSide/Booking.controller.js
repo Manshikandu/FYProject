@@ -15,19 +15,17 @@ export const getArtistBookings = async (req, res) => {
 
     res.status(200).json({ bookings });
   } catch (error) {
-    console.error("Error in getArtistBookings:", error); // log full error!
+    console.error("Error in getArtistBookings:", error); 
     res.status(500).json({ message: "Server error fetching bookings" });
   }
 };
-
-
 
 
 export const updateBookingStatus = async (req, res) => {
   try {
     const artistId = req.user._id;
     const { bookingId } = req.params;
-    const { status } = req.body; // expected values: "accepted", "rejected"
+    const { status } = req.body; 
 
     const booking = await Booking.findById(bookingId);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
