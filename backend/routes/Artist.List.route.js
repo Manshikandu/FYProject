@@ -12,21 +12,13 @@
 // export default router;
 
 
-//1st
-// import express from "express";
-//  import { getArtistsByCategory } from "../controllers/Artist.List.controller.js";
-//  const router = express.Router();
-
-// router.get('/artists/category/:category', getArtistsByCategory);
-
-//  export default router;
-
 
 import express from "express";
 import {
   getArtistsByCategory,
   searchArtists,
-  getClientBookings, GetArtistProfile
+  getClientBookings, 
+  GetArtistProfile
 } from "../controllers/Artist.List.controller.js";
 
 const router = express.Router();
