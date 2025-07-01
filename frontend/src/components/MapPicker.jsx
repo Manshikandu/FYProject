@@ -23,23 +23,36 @@ const MapPicker = ({ value, onChange }) => {
   const [searchInput, setSearchInput] = useState("");
   const [confirmedPosition, setConfirmedPosition] = useState(null);
 
-  useEffect(() => {
-    if (!value && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          setPosition(coords);
-          setMapCenter(coords);
-          setSearchInput(`${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
-        },
-        () => {
-          setPosition(defaultPosition);
-          setMapCenter(defaultPosition);
-          setSearchInput(`${defaultPosition.lat}, ${defaultPosition.lng}`);
-        }
-      );
-    }
-  }, [value]);
+ useEffect(() => {
+  if (value) {
+    setPosition(value);
+    setMapCenter(value);
+    setSearchInput(`${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}`);
+  } else if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setPosition(coords);
+        setMapCenter(coords);
+        setSearchInput(`${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
+      },
+      () => {
+        setPosition(defaultPosition);
+        setMapCenter(defaultPosition);
+        setSearchInput(`${defaultPosition.lat}, ${defaultPosition.lng}`);
+      }
+    );
+  }
+}, [value]);
+
+useEffect(() => {
+  if (value) {
+    setConfirmedPosition(value);
+  } else {
+    setConfirmedPosition(null);
+  }
+}, [value]);
+
 
   const searchLocation = async () => {
     if (!searchInput) return;
@@ -154,12 +167,7 @@ const MapPicker = ({ value, onChange }) => {
         <ChangeMapView center={mapCenter} />
         <LocationMarkerWithClick />
       </MapContainer>
-
-      {confirmedPosition && (
         <div className="mt-2 flex items-center gap-2">
-          <p>
-            <b>Location Set:</b> {confirmedPosition.lat.toFixed(5)}, {confirmedPosition.lng.toFixed(5)}
-          </p>
           <button
             onClick={goToCurrentLocation}
             className="bg-gray-700 text-white px-2 rounded"
@@ -167,8 +175,14 @@ const MapPicker = ({ value, onChange }) => {
           >
             📍
           </button>
+
+          {confirmedPosition && (
+            <p>
+              <b>Location Set:</b> {confirmedPosition.lat.toFixed(5)}, {confirmedPosition.lng.toFixed(5)}
+            </p>
+          )}
         </div>
-      )}
+
     </div>
   );
 };

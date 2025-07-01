@@ -11,5 +11,6 @@ export const BookCard = ({ children, className = "" }) => {
 };
 
 export const BookCardContent = ({ children }) => {
-  return <div className="mt-4">{children}</div>;
+  return <div className="mt-4 flex-grow">{children}</div>;
 };
+
