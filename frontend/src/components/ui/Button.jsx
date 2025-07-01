@@ -4,7 +4,7 @@ import React from 'react';
 export const Button = ({ children, onClick, type = "button", variant = "primary", disabled = false }) => {
   const base = "px-4 py-2 rounded text-white font-semibold transition duration-200";
   const variants = {
-    primary: "bg-[#1da1f2] hover:bg-[#3ee6e6]",
+    primary: "bg-purple-500 hover:bg-purple-400",
     secondary: "bg-gray-600 hover:bg-gray-500",
   };
 
