@@ -1,5 +1,7 @@
 import Booking from "../models/Artist.Booking.model.js";
 import Artist from "../models/Artist.model.js";
+import { createNotificationAndEmit } from "../controllers/Notification.controller.js";
+import { statusWeights, contractWeights, getRecencyWeight, calculateBookingScore } from "../utils/bookingPriority.js";
 
 
 export const createBooking = async (req, res) => {
@@ -84,6 +86,14 @@ if (!emailRegex.test(contactEmail)) {
 
     await newBooking.save();
 
+    await createNotificationAndEmit({
+  userId: artistId,
+  userType: "Artist",
+  type: "booking",
+  message: `New booking request from ${req.user.username || 'a client'}.`,
+});
+
+
     res.status(201).json({
       message: "Booking request sent successfully",
       booking: newBooking,
@@ -94,28 +104,52 @@ if (!emailRegex.test(contactEmail)) {
   }
 };
 
-
 export const getMyBookings = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id;
+    const { sortBy = "priority", sortOrder = "desc" } = req.query;
 
-    let bookings;
-
-
+    let query;
     if (req.user.role === "client") {
-      bookings = await Booking.find({ client: userId })
-
-        .populate("artist", "username email phone")
-        .sort({ createdAt: -1 });
+      query = Booking.find({ client: userId }).populate("artist", "username email phone");
     } else if (req.user.role === "artist") {
-      bookings = await Booking.find({ "artist": userId })
-        .populate("client", "username email phone")
-        .sort({ createdAt: -1 });
+      query = Booking.find({ artist: userId }).
+      populate("client", "username email phone");
     } else {
       return res.status(403).json({ error: "Invalid role" });
     }
 
-    res.json(bookings);
+    // Execute query without sort for now
+    const bookings = await query;
+
+    let sortedBookings;
+
+    if (sortBy === "createdAt") {
+      sortedBookings = bookings.sort((a, b) => {
+        return sortOrder === "asc"
+          ? new Date(a.createdAt) - new Date(b.createdAt)
+          : new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    } else if (sortBy === "updatedAt") {
+      sortedBookings = bookings.sort((a, b) => {
+        return sortOrder === "asc"
+          ? new Date(a.updatedAt) - new Date(b.updatedAt)
+          : new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+    } else if (sortBy === "priority") {
+      const scored = bookings.map((b) => ({
+        ...b.toObject(),
+        score: calculateBookingScore(b),
+      }));
+      sortedBookings = scored.sort((a, b) =>
+        sortOrder === "asc" ? a.score - b.score : b.score - a.score
+      );
+    } else {
+      // Default fallback: updatedAt desc
+      sortedBookings = bookings.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    }
+
+    res.json(sortedBookings);
   } catch (err) {
     console.error("Error fetching bookings:", err);
     res.status(500).json({ error: "Server error while fetching bookings" });
@@ -143,7 +177,7 @@ export const getBookedSlotsForArtist = async (req, res) => {
 export const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate("artist", "username email phone category") 
+      .populate("artist", "username email phone category wage") 
       .populate("client", "username email phone");
 
     if (!booking) {
@@ -169,3 +203,5 @@ export const getBookingById = async (req, res) => {
     res.status(500).json({ message: "Error fetching booking details" });
   }
 };
+
+
