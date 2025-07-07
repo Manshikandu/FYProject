@@ -1,5 +1,7 @@
 import Booking from "../models/Artist.Booking.model.js";
 import Artist from "../models/Artist.model.js";
+import { createNotificationAndEmit } from "../controllers/Notification.controller.js";
+import { statusWeights, contractWeights, getRecencyWeight, calculateBookingScore } from "../utils/bookingPriority.js";
 
 
 export const createBooking = async (req, res) => {
@@ -34,46 +36,36 @@ if (!emailRegex.test(contactEmail)) {
     }
 
 //added
-       // Normalize eventDate to midnight for querying same day bookings
     const eventDateStart = new Date(eventDate);
     eventDateStart.setHours(0, 0, 0, 0);
     const eventDateEnd = new Date(eventDate);
     eventDateEnd.setHours(23, 59, 59, 999);
 
-    // Step 1: Fetch existing accepted/booked bookings on the same day for the artist
+  
     const existingBookings = await Booking.find({
       artist: artistId,
       eventDate: { $gte: eventDateStart, $lte: eventDateEnd },
       status: { $in: ["accepted", "booked"] },
     });
 
-    // Step 2: Check for any time overlap conflict
     const newStart = new Date(startTime);
     const newEnd = new Date(endTime);
 
-    // const isConflict = existingBookings.some(booking => {
-    //   const existingStart = new Date(booking.startTime);
-    //   const existingEnd = new Date(booking.endTime);
-    //   return newStart < existingEnd && existingStart < newEnd;
-    // });
-
     const BUFFER_MINUTES = 30;
-const BUFFER_MS = BUFFER_MINUTES * 60 * 1000;
+    const BUFFER_MS = BUFFER_MINUTES * 60 * 1000;
 
-const isConflict = existingBookings.some(booking => {
-  const existingStart = new Date(booking.startTime).getTime() - BUFFER_MS;
-  const existingEnd = new Date(booking.endTime).getTime() + BUFFER_MS;
-  const newStartTime = new Date(startTime).getTime();
-  const newEndTime = new Date(endTime).getTime();
+    const isConflict = existingBookings.some(booking => {
+      const existingStart = new Date(booking.startTime).getTime() - BUFFER_MS;
+      const existingEnd = new Date(booking.endTime).getTime() + BUFFER_MS;
+      const newStartTime = new Date(startTime).getTime();
+      const newEndTime = new Date(endTime).getTime();
 
-  return Math.max(existingStart, newStartTime) < Math.min(existingEnd, newEndTime);
-});
+      return Math.max(existingStart, newStartTime) < Math.min(existingEnd, newEndTime);
+    });
 
     if (isConflict) {
       return res.status(409).json({ message: "Booking conflict: The selected time slot is already booked." });
     }
-//
-
 
     const newBooking = new Booking({
       client: clientId,
@@ -94,6 +86,14 @@ const isConflict = existingBookings.some(booking => {
 
     await newBooking.save();
 
+    await createNotificationAndEmit({
+  userId: artistId,
+  userType: "Artist",
+  type: "booking",
+  message: `New booking request from ${req.user.username || 'a client'}.`,
+});
+
+
     res.status(201).json({
       message: "Booking request sent successfully",
       booking: newBooking,
@@ -104,28 +104,52 @@ const isConflict = existingBookings.some(booking => {
   }
 };
 
-
 export const getMyBookings = async (req, res) => {
   try {
-    const userId = req.user.id; //  set by verifytoken middleware
+    const userId = req.user.id;
+    const { sortBy = "priority", sortOrder = "desc" } = req.query;
 
-    let bookings;
-
-
+    let query;
     if (req.user.role === "client") {
-      bookings = await Booking.find({ client: userId })
-
-        .populate("artist", "username email phone")
-        .sort({ createdAt: -1 });
+      query = Booking.find({ client: userId }).populate("artist", "username email phone");
     } else if (req.user.role === "artist") {
-      bookings = await Booking.find({ "artist": userId })
-        .populate("client", "username email phone")
-        .sort({ createdAt: -1 });
+      query = Booking.find({ artist: userId }).
+      populate("client", "username email phone");
     } else {
       return res.status(403).json({ error: "Invalid role" });
     }
 
-    res.json(bookings);
+    // Execute query without sort for now
+    const bookings = await query;
+
+    let sortedBookings;
+
+    if (sortBy === "createdAt") {
+      sortedBookings = bookings.sort((a, b) => {
+        return sortOrder === "asc"
+          ? new Date(a.createdAt) - new Date(b.createdAt)
+          : new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    } else if (sortBy === "updatedAt") {
+      sortedBookings = bookings.sort((a, b) => {
+        return sortOrder === "asc"
+          ? new Date(a.updatedAt) - new Date(b.updatedAt)
+          : new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+    } else if (sortBy === "priority") {
+      const scored = bookings.map((b) => ({
+        ...b.toObject(),
+        score: calculateBookingScore(b),
+      }));
+      sortedBookings = scored.sort((a, b) =>
+        sortOrder === "asc" ? a.score - b.score : b.score - a.score
+      );
+    } else {
+      // Default fallback: updatedAt desc
+      sortedBookings = bookings.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    }
+
+    res.json(sortedBookings);
   } catch (err) {
     console.error("Error fetching bookings:", err);
     res.status(500).json({ error: "Server error while fetching bookings" });
@@ -133,8 +157,6 @@ export const getMyBookings = async (req, res) => {
 };
 
 
-//added
-// controllers/Artist.Booking.controller.js
 export const getBookedSlotsForArtist = async (req, res) => {
   try {
     const { artistId } = req.params;
@@ -152,13 +174,10 @@ export const getBookedSlotsForArtist = async (req, res) => {
 };
 
 
-
-
-// GET /bookings/:id
 export const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate("artist", "username email phone category") // only necessary fields
+      .populate("artist", "username email phone category wage") 
       .populate("client", "username email phone");
 
     if (!booking) {
@@ -184,3 +203,5 @@ export const getBookingById = async (req, res) => {
     res.status(500).json({ message: "Error fetching booking details" });
   }
 };
+
+
