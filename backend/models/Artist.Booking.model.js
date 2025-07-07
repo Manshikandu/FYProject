@@ -1,3 +1,4 @@
+//Artist.Booking.model.js
 import mongoose from "mongoose";
 
 const BookingSchema = new mongoose.Schema(
@@ -41,13 +42,21 @@ const BookingSchema = new mongoose.Schema(
       enum: ["none", "draft", "signed"],
       default: "none",
     },
-    contractUrl: { type: String },                    // URL to the generated PDF
-  clientSignatureDate: { type: Date },
-  artistSignatureDate: { type: Date },
+    contractUrl: { type: String },                    
+    clientSignatureDate: { type: Date },
+    artistSignatureDate: { type: Date },
 
-  },
-  
-  
+   isPaid: { type: Boolean, default: false },
+
+   advance: { type: Number },
+    
+    lastActionTime: {
+      type: Date,
+      default: Date.now,
+      required: true,
+    },
+
+  },  
   { timestamps: true }
 );
 

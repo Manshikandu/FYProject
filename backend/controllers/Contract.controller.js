@@ -5,12 +5,14 @@ import fs from 'fs';
 import path from 'path';
 import moment from 'moment';
 import Booking from '../models/Artist.Booking.model.js';
+import { createNotificationAndEmit } from "./Notification.controller.js";
+
 
 const CONTRACT_FOLDER = 'contracts';
 if (!fs.existsSync(CONTRACT_FOLDER)) fs.mkdirSync(CONTRACT_FOLDER);
 
 export const generateClientContract = async (req, res) => {
-  const { bookingId, wage, signatureImage, paymentMethods, technicalReqs } = req.body;
+  const { bookingId, signatureImage, paymentMethods, technicalReqs } = req.body;
   const userId = req.user._id;
   console.log('User ID:', userId);
 console.log('Booking ID:', bookingId);
@@ -28,20 +30,32 @@ console.log('Request body:', req.body);
   return res.status(403).json({ message: "Only the client can generate the contract" });
 }
 
-
-
     // Prevent regenerating contract if draft or signed exists
     if (booking.contractStatus === 'draft' || booking.contractStatus === 'signed') {
       return res.status(400).json({ message: 'Contract already generated and cannot be regenerated.' });
     }
 
-    booking.wage = Number(wage) || 0;
-    booking.clientSignature = signatureImage;
-    booking.paymentMethods = paymentMethods;
-    booking.technicalReqs = technicalReqs;
-    booking.contractStatus = 'draft';
+ // Get hourly rate from artist
+const hourlyRate = booking.artist.wage || ""; // fallback rate
 
-    await booking.save();
+// Calculate total hours
+const totalHours = moment(booking.endTime).diff(moment(booking.startTime), 'hours', true);
+const totalWage = Math.round(totalHours * hourlyRate);
+
+// Save into booking
+booking.totalHours = totalHours;
+booking.wage = totalWage;
+booking.advance = Math.floor(totalWage / 2);
+booking.clientSignature = signatureImage;
+booking.clientSignatureDate = new Date(); 
+booking.paymentMethods = paymentMethods;
+booking.technicalReqs = technicalReqs;
+booking.contractStatus = 'draft';
+
+booking.lastActionTime = new Date();
+
+await booking.save();
+
 
     const fileName = `contract-${bookingId}-draft.pdf`;
     const filePath = path.join(CONTRACT_FOLDER, fileName);
@@ -50,6 +64,16 @@ console.log('Request body:', req.body);
 
     booking.contractUrl = `/contracts/${fileName}`;
     await booking.save();
+
+    // Notify the artist about the new contract
+    await createNotificationAndEmit({
+      userId: booking.artist._id,
+      userType: "Artist",
+      type: "contract",
+      message: `A new contract has been created for booking with ${booking.client.name}.`
+      
+    });
+
 
     res.json({ success: true, contractUrl: booking.contractUrl });
   } catch (error) {
@@ -69,8 +93,14 @@ export const signContractByArtist = async (req, res) => {
 if (booking.artist._id.toString() !== userId.toString()) {
     return res.status(403).json({ message: "Only the artist can sign the contract" });
   }
-    booking.artistSignature = artistSignature;
-    booking.contractStatus = 'signed';
+
+    // Set booking status to "booked"
+      booking.status = 'accepted';
+      booking.contractSignedAt = new Date();
+      booking.artistSignature = artistSignature;
+      booking.contractStatus = 'signed';
+
+      booking.lastActionTime = new Date();
 
     await booking.save();
 
@@ -81,6 +111,15 @@ if (booking.artist._id.toString() !== userId.toString()) {
 
     booking.contractUrl = `/contracts/${fileName}`;
     await booking.save();
+
+     // Notify client that artist signed the contract
+   await createNotificationAndEmit({
+  userId: booking.client._id,
+  userType: "Client",
+  type: "contract",
+  message: `The artist ${booking.artist.name} has signed the contract.`,
+});
+
 
     res.json({ success: true, contractUrl: booking.contractUrl });
   } catch (error) {
@@ -119,6 +158,7 @@ export const getContractDetails = async (req, res) => {
   }
 };
 
+// Updated generateContractPDF with improvements
 async function generateContractPDF(booking, clientSig, artistSig, filePath) {
   return new Promise((resolve) => {
     const doc = new PDFDocument({ margin: 50 });
@@ -132,21 +172,17 @@ async function generateContractPDF(booking, clientSig, artistSig, filePath) {
     const wage = booking.wage || 0;
     const advance = Math.floor(wage / 2);
 
-    // Title
     doc.fontSize(20).text('Artist Booking Contract', { align: 'center' }).moveDown();
 
-    // Date line
-    const contractDate = moment().format('MMMM D, YYYY'); // current date
-doc.fontSize(12).text(`This Agreement is made on this ${contractDate}.`, { align: 'left' }).moveDown();
+    const contractDate = moment().format('MMMM D, YYYY');
+    doc.fontSize(12).text(`This Agreement is made on this ${contractDate}.`, { align: 'left' }).moveDown();
 
-
-    // Client Info
-    doc.fontSize(14).text('Client/Organizer:', { underline: true });
-    doc.fontSize(12)
-      .text(`Name: ${booking.client.username || booking.client.name || ''}`)
-      .text(`Phone: ${booking.client.phone || ''}`)
-      .text(`Email: ${booking.client.email || ''}`)
-      .moveDown();
+      doc.fontSize(14).text('Event Contact Person:', { underline: true });
+      doc.fontSize(12)
+        .text(`Name: ${booking.contactName || booking.client.username || 'N/A'}`)
+        .text(`Phone: ${booking.contactPhone || booking.client.phone || 'N/A'}`)
+        .text(`Email: ${booking.contactEmail || booking.client.email || 'N/A'}`)
+        .moveDown();
 
     // Artist Info
     doc.fontSize(14).text('Artist/Performer:', { underline: true });
@@ -172,9 +208,8 @@ doc.fontSize(12).text(`This Agreement is made on this ${contractDate}.`, { align
     // Payment Terms
     doc.fontSize(14).text('4. Payment Terms', { underline: true });
     doc.fontSize(12).text('Payment will be made by (check one or more):');
-
     const pm = booking.paymentMethods || {};
-    doc.text(pm.check ? '[x] Check' : '[ ] Check');
+    doc.text(pm.PayPal ? '[x] PayPal' : '[ ] PayPal');
     doc.text(pm.cash ? '[x] Cash' : '[ ] Cash');
     doc.text(pm.bankTransfer ? '[x] Bank Transfer' : '[ ] Bank Transfer');
     if (pm.other) {
@@ -182,12 +217,17 @@ doc.fontSize(12).text(`This Agreement is made on this ${contractDate}.`, { align
     } else {
       doc.text('[ ] Other: _______________________');
     }
-    doc.moveDown()
-      .text(`The Client agrees to pay a non-refundable advance payment of 50% of the total wage (Rs. ${advance || '_____'}) to confirm the booking, which shall be paid on the day of the event prior to performance.`)
+    doc.moveDown();
+    doc.text(`The Client agrees to pay a non-refundable advance payment of 50% of the total wage (Rs. ${advance || '_____'}) immediately upon the Artist's signature to confirm the booking.`)
       .moveDown();
 
+    // Advance and Balance
+    doc.fontSize(14).text('5. Advance & Remaining Balance', { underline: true });
+    doc.fontSize(12).text(`Advance to be paid: Rs. ${advance}`);
+    doc.fontSize(12).text(`Remaining to be paid after performance: Rs. ${wage - advance}`).moveDown();
+
     // Cancellation Policy
-    doc.fontSize(14).text('5. Cancellation Policy', { underline: true });
+    doc.fontSize(14).text('6. Cancellation Policy', { underline: true });
     doc.fontSize(12)
       .text('- If Client cancels more than 7 days before the event, the advance payment is forfeited;')
       .text('- If Client cancels within 7 days of the event, the full wage is due.')
@@ -195,62 +235,44 @@ doc.fontSize(12).text(`This Agreement is made on this ${contractDate}.`, { align
       .moveDown();
 
     // Additional Requirements
-    doc.fontSize(14).text('6. Additional Requirements', { underline: true });
+    doc.fontSize(14).text('7. Additional Requirements', { underline: true });
     doc.fontSize(12).text(booking.technicalReqs || 'None specified').moveDown();
 
     // Liability
-    doc.fontSize(14).text('7. Liability', { underline: true });
-    doc.fontSize(12).text(
-      'Client agrees to provide a safe environment for the Artist. The Client assumes all responsibility for any injury or damage occurring at the event, except where caused by the Artist’s negligence.'
-    ).moveDown();
+    doc.fontSize(14).text('8. Liability', { underline: true });
+    doc.fontSize(12).text('Client agrees to provide a safe environment for the Artist. The Client assumes all responsibility for any injury or damage occurring at the event, except where caused by the Artist’s negligence.').moveDown();
 
     // Miscellaneous
-    doc.fontSize(14).text('8. Miscellaneous', { underline: true });
+    doc.fontSize(14).text('9. Miscellaneous', { underline: true });
     doc.fontSize(12)
       .text('This Agreement is the entire understanding between the parties.')
       .text('Any amendments must be in writing and signed by both parties.')
-      .moveDown(2);
+      .moveDown();
 
     // Signatures
-    // doc.fontSize(14).text('Signatures', { underline: true }).moveDown();
-
-    // if (clientSig) {
-    //   doc.text('Client Signature:');
-    //   const buffer = Buffer.from(clientSig.replace(/^data:image\/png;base64,/, ''), 'base64');
-    //   doc.image(buffer, { fit: [150, 80] }).moveDown();
-    // } else {
-    //   doc.text('Client Signature: _____________________________').moveDown();
-    // }
-
-    // if (artistSig) {
-    //   doc.text('Artist Signature:');
-    //   const buffer = Buffer.from(artistSig.replace(/^data:image\/png;base64,/, ''), 'base64');
-    //   doc.image(buffer, { fit: [150, 80] }).moveDown();
-    // } else {
-    //   doc.text('Artist Signature: _____________________________').moveDown();
-    // }
-
     doc.fontSize(12).text('Client Signature:', 50, doc.y);
-doc.fontSize(12).text('Artist Signature:', 320, doc.y);
-doc.moveDown(0.5);
+    doc.fontSize(12).text('Artist Signature:', 320, doc.y);
+    doc.moveDown(0.5);
+    const startY = doc.y; 
+    if (clientSig) {
+      const clientBuffer = Buffer.from(clientSig.replace(/^data:image\/png;base64,/, ''), 'base64');
+      doc.image(clientBuffer, 50, doc.y, { fit: [150, 80] });
+        doc.fontSize(10).text(`Date: ${moment(booking.clientSignatureDate).format("MMMM D, YYYY")}`, 50, doc.y + 85);
 
-if (clientSig) {
-  const clientBuffer = Buffer.from(clientSig.replace(/^data:image\/png;base64,/, ''), 'base64');
-  doc.image(clientBuffer, 50, doc.y, { fit: [150, 80] });
-} else {
-  doc.text('_____________________________', 50, doc.y + 20);
-}
+    } else {
+      doc.text('_____________________________', 50, doc.y + 20);
+    }
 
-if (artistSig) {
-  const artistBuffer = Buffer.from(artistSig.replace(/^data:image\/png;base64,/, ''), 'base64');
-  doc.image(artistBuffer, 320, doc.y, { fit: [150, 80] });
-} else {
-  doc.text('_____________________________', 320, doc.y + 20);
-}
+    if (artistSig) {
+      const artistBuffer = Buffer.from(artistSig.replace(/^data:image\/png;base64,/, ''), 'base64');
+      doc.image(artistBuffer, 320, doc.y, { fit: [150, 80] });
+        doc.fontSize(10).text(`Date: ${moment(booking.artistSignatureDate).format("MMMM D, YYYY")}`, 320, doc.y + 85);
 
-doc.moveDown(5);
-//
+    } else {
+      doc.text('_____________________________', 320, doc.y + 20);
+    }
 
+    doc.moveDown(5);
     doc.end();
     stream.on('finish', resolve);
   });

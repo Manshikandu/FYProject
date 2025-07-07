@@ -1,53 +1,56 @@
+// models/Payment.model.js
 import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema({
   bookingId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Booking",
-    required: true
+    required: true,
   },
   clientId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true
+    required: true,
   },
   artistId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
+    ref: "Artist", // assuming this is separate from User
+    required: true,
   },
   amount: {
     type: Number,
-    required: true
+    required: true,
   },
   currency: {
     type: String,
-    default: "NPR" // or USD, etc.
+    default: "NPR",
   },
   paymentMethod: {
     type: String,
-    enum: ["Khalti", "eSewa", "Card", "Bank Transfer", "Cash"],
-    required: true
+    enum: ["PayPal", "eSewa", "Card", "Bank Transfer", "Cash"],
+    default: "PayPal",
   },
   paymentStatus: {
     type: String,
-    enum: ["pending", "completed", "failed", "refunded"],
-    default: "pending"
+    enum: ["pending", "paid", "failed", "refunded"],
+    default: "pending",
   },
   transactionId: {
-    type: String, // From third-party payment gateway
+    type: String,
     unique: true,
-    sparse: true
+    sparse: true,
+      required: function () {
+    return this.paymentStatus === "paid";
   },
+  },
+  payerEmail: String,
+paypalDetails: mongoose.Schema.Types.Mixed, // to store raw PayPal response (optional)
+
   paidAt: {
-    type: Date
+    type: Date,
   },
-  note: {
-    type: String
-  }
-}, {
-  timestamps: true
-});
+  note: String,
+}, { timestamps: true });
 
 const Payment = mongoose.model("Payment", paymentSchema);
 export default Payment;
