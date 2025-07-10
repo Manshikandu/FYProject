@@ -25,7 +25,12 @@ const reviewSchema = new mongoose.Schema({
   reviewText: {
     type: String,
     required: false
-  }
+  },
+  status: {
+    type: String,
+    enum: ["pending", "confirmed", "cancelled", "completed"],
+    default: "pending",
+  },
 }, {
   timestamps: true
 });
