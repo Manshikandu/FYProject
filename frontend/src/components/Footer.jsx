@@ -54,7 +54,7 @@
 
 const Footer = () => {
   return (
-    <footer id="footer" className="bg-purple-300 text-gray-600 py-8 mt-12">
+    <footer id="footer" className="bg-[#f2f2f2] text-gray-600 py-8 mt-12">
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
 
         {/* About */}
