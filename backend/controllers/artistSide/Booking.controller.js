@@ -37,7 +37,9 @@ export const getArtistBookings = async (req, res) => {
         break;
     }
 
-    let bookings = await Booking.find({ artist: artistId }).populate("client", "username email phone");
+    let bookings = await Booking.find({ artist: artistId })
+  .populate("client", "username email phone profilePicture")
+  .populate("payments"); 
 
     if (sortBy === "priority") {
       // Calculate score and sort in memory
