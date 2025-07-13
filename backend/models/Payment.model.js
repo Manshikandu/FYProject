@@ -23,7 +23,7 @@ const paymentSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: "NPR",
+    default: "USD",
   },
   paymentMethod: {
     type: String,
@@ -44,11 +44,19 @@ const paymentSchema = new mongoose.Schema({
   },
   },
   payerEmail: String,
-paypalDetails: mongoose.Schema.Types.Mixed, // to store raw PayPal response (optional)
+  paypalDetails: mongoose.Schema.Types.Mixed, 
 
   paidAt: {
     type: Date,
   },
+
+  paymentType: {
+  type: String,
+  enum: ["advance", "final"],
+  required: true,
+  default: "advance",
+},
+
   note: String,
 }, { timestamps: true });
 
