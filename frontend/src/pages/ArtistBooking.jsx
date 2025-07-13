@@ -516,6 +516,17 @@ import { toast } from "react-hot-toast";
 
 const steps = ["Set date", "Set Location", "Details", "Event Details", "Done"];
 
+// Combine date part from `date` and time part from `time` into a single Date object
+function combineDateAndTime(date, time) {
+  const combined = new Date(date);
+  combined.setHours(time.getHours());
+  combined.setMinutes(time.getMinutes());
+  combined.setSeconds(time.getSeconds());
+  combined.setMilliseconds(time.getMilliseconds());
+  return combined;
+}
+
+
 const ArtistBookingForm = () => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -583,17 +594,20 @@ const ArtistBookingForm = () => {
   // Handle start time change with overlap check
   const handleStartTimeChange = (newStartTime) => {
     if (!newStartTime) return;
-    const newStart = newStartTime.getTime();
-    const end = formData.endTime.getTime();
+      const newStart = combineDateAndTime(formData.date, newStartTime).getTime();
+      const end = combineDateAndTime(formData.date, formData.endTime).getTime();
+
 
     // if (newStart >= end) {
     //   toast.error("Start time must be before end time.");
     //   return;
     // }
 
+    const BUFFER_MS = 30 * 60 * 1000;
+
     const conflict = slotsForSelectedDate.some((slot) => {
-      const bookedStart = new Date(slot.startTime).getTime();
-      const bookedEnd = new Date(slot.endTime).getTime();
+      const bookedStart = new Date(slot.startTime).getTime() - BUFFER_MS;
+      const bookedEnd = new Date(slot.endTime).getTime() + BUFFER_MS;
       return isTimeOverlap(newStart, end, bookedStart, bookedEnd);
     });
 
@@ -608,8 +622,9 @@ const ArtistBookingForm = () => {
   // Handle end time change with overlap check
   const handleEndTimeChange = (newEndTime) => {
     if (!newEndTime) return;
-    const start = formData.startTime.getTime();
-    const newEnd = newEndTime.getTime();
+    const start = combineDateAndTime(formData.date, formData.startTime).getTime();
+    const newEnd = combineDateAndTime(formData.date, newEndTime).getTime();
+
 
     if (newEnd <= start) {
       toast.error("End time must be after start time.");
@@ -629,6 +644,29 @@ const ArtistBookingForm = () => {
 
     setFormData((prev) => ({ ...prev, endTime: newEndTime }));
   };
+
+  const handleMapChange = async (coords) => {
+  setFormData((prev) => ({ ...prev, coordinates: coords }));
+
+  // Call OpenStreetMap's Nominatim API to get address
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lng}&format=json`
+    );
+
+    const data = await response.json();
+
+    if (data && data.display_name) {
+      setFormData((prev) => ({
+        ...prev,
+        location: data.display_name,
+      }));
+    }
+  } catch (error) {
+    console.error("Reverse geocoding failed:", error);
+  }
+};
+
 
   // Handle other form field changes
   const handleChange = (e) => {
@@ -652,8 +690,8 @@ const ArtistBookingForm = () => {
       // }
 
       // Time overlap check on submit too
-      const start = formData.startTime.getTime();
-      const end = formData.endTime.getTime();
+      const start = combineDateAndTime(formData.date, formData.startTime).getTime();
+      const end = combineDateAndTime(formData.date, formData.endTime).getTime();
 
       if (start >= end) {
         toast.error("Start time must be before end time.");
@@ -675,6 +713,10 @@ const ArtistBookingForm = () => {
     if (step === 1) {
       if (!formData.location?.trim()) {
         toast.error("Please set a location before proceeding.");
+        return false;
+      }
+      if (!formData.coordinates) {
+        toast.error("Please select a location on the map.");
         return false;
       }
     }
@@ -724,11 +766,14 @@ const ArtistBookingForm = () => {
       return;
     }
     try {
+      const startDateTime = combineDateAndTime(formData.date, formData.startTime);
+      const endDateTime = combineDateAndTime(formData.date, formData.endTime);
+
       const bookingData = {
         artistId: selectedArtistId,
         eventDate: formData.date.toISOString(),
-        startTime: formData.startTime.toISOString(),
-        endTime: formData.endTime.toISOString(),
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
         location: formData.location,
         coordinates: formData.coordinates,
         contactName: formData.name,
@@ -951,12 +996,13 @@ const ArtistBookingForm = () => {
                 value={formData.location}
                 onChange={handleChange}
                 className="w-full border p-2 rounded"
-                placeholder="Event Location (optional address)"
+                placeholder="Event Location (auto-filled from map)"
               />
-              <MapPicker
+             <MapPicker
                 value={formData.coordinates}
-                onChange={(coords) => setFormData((prev) => ({ ...prev, coordinates: coords }))}
+                onChange={handleMapChange}
               />
+
             </div>
           )}
 

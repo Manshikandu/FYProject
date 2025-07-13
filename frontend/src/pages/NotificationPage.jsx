@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 
 const NotificationsPage = () => {
 
@@ -96,7 +97,7 @@ const NotificationsPage = () => {
             >
               <div>{note.message}</div>
               <div className="text-xs text-gray-400">
-                {new Date(note.createdAt).toLocaleString()}
+                {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
               </div>
             </li>
           ))}

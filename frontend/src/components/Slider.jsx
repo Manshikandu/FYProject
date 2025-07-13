@@ -4,7 +4,9 @@ import { useUserStore } from '../stores/useUserStore';
 import { motion } from 'framer-motion';
 import img1 from '../assets/black.jpg';
 import img2 from '../assets/road.jpg';
-import welcomeImg from '../assets/welcome.svg'; // 🖼️ your illustration
+// import welcomeImg from '../assets/welcome.svg'; // 🖼️ your illustration
+import welcomeBg from '../assets/image.png'; // adjust the path as needed
+
 
 const images = [img1, img2];
 
@@ -22,38 +24,39 @@ const Slider = () => {
 
   if (user) {
     return (
-      <div className="relative w-full h-[700px] bg-gradient-to-r from-black to-black text-white rounded-lg shadow-lg flex items-center px-8">
-        {/* Left: Welcome Text */}
-        <div className="flex-1 space-y-6 px-15">
-          <motion.h1
-            className="text-4xl md:text-6xl font-bold"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            Welcome, {user.username || ''}!
-          </motion.h1>
-          <motion.p
-            className="text-lg md:text-xl max-w-xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            Ready to explore artists and make your event unforgettable?
-          </motion.p>
-          
-        </div>
+     <div
+  className="relative w-full h-[600px] rounded-lg shadow-lg overflow-hidden"
+>
+  {/* Blurred Background Image */}
+  <div
+    className="absolute inset-0 bg-cover bg-center scale-110"
+    style={{ backgroundImage: `url(${welcomeBg})` }}
+  ></div>
 
-        {/* Right: Illustration */}
-        <motion.img
-          src={welcomeImg}
-          alt="Welcome"
-          className="hidden md:block flex-1 w-full h-130 object-contain"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1 }}
-        />
-      </div>
+  {/* Overlay */}
+  <div className="absolute inset-0 bg-black/60"></div>
+
+  {/* Centered Welcome Text */}
+  <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
+    <motion.h1
+      className="text-4xl md:text-6xl font-bold"
+      initial={{ opacity: 0, y: -30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      Welcome, {user.username || ''}
+    </motion.h1>
+    <motion.p
+      className="text-lg md:text-xl max-w-xl mt-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      Ready to explore artists and make your event unforgettable?
+    </motion.p>
+  </div>
+</div>
+
     );
   }
 
