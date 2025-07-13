@@ -1,3 +1,4 @@
+//review.model.js
 import mongoose from "mongoose";
 
 const reviewSchema = new mongoose.Schema({
@@ -13,7 +14,7 @@ const reviewSchema = new mongoose.Schema({
   },
   artistId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Artist",
     required: true
   },
   rating: {
@@ -28,8 +29,8 @@ const reviewSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "confirmed", "cancelled", "completed"],
-    default: "pending",
+    enum: ["pending", "confirmed"],
+    default: "confirmed",
   },
 }, {
   timestamps: true

@@ -46,10 +46,22 @@ const BookingSchema = new mongoose.Schema(
     clientSignatureDate: { type: Date },
     artistSignatureDate: { type: Date },
 
-   isPaid: { type: Boolean, default: false },
+    payments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Payment" }],
 
-   advance: { type: Number },
-    
+    isPaid: { type: Boolean, default: false },
+
+    advance: { type: Number },
+
+    completionConfirmedByClient: {
+      type: Boolean,
+      default: false,
+    },
+
+    isFinalPaid: {
+      type: Boolean,
+      default: false,
+    },
+
     lastActionTime: {
       type: Date,
       default: Date.now,
