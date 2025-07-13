@@ -145,6 +145,7 @@ export default function RecommendedArtists({ clientId }) {
                   <h3 className="text-2xl font-semibold text-gray-900 mb-3">
                     {artist.username}
                   </h3>
+                  
 
                   <div className="flex items-center text-gray-600 text-sm gap-4 mb-3">
                     <span className="capitalize font-medium">{artist.category}</span>
@@ -153,7 +154,7 @@ export default function RecommendedArtists({ clientId }) {
                         {artist.genres.slice(0, 3).map((genre, index) => (
                           <span
                             key={index}
-                            className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap"
+                            className="text-xs bg-purple-100 text-purple-900 px-2 py-0.5 rounded-full whitespace-nowrap"
                           >
                             {genre}
                           </span>
@@ -171,11 +172,31 @@ export default function RecommendedArtists({ clientId }) {
                       <span>{artist.location?.city || "Unknown"}</span>
                     </div>
                   </div>
+                  {artist.weightedRating !== undefined && (
+  <div className="flex items-center gap-2 text-yellow-500 text-sm font-medium mb-2">
+    <div className="flex gap-1">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <svg
+          key={i}
+          className={`w-4 h-4 ${i < Math.round(artist.weightedRating) ? "fill-yellow-400" : "fill-gray-300"}`}
+          viewBox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.463a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.538 1.118l-3.388-2.462a1 1 0 00-1.175 0L5.213 17.06c-.783.57-1.838-.196-1.538-1.118l1.287-3.966a1 1 0 00-.364-1.118L1.21 9.394c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.967z" />
+        </svg>
+      ))}
+    </div>
+    <span className="text-gray-700">
+      {artist.weightedRating.toFixed(1)} ({artist.totalRatings})
+    </span>
+  </div>
+)}
+
                 </div>
 
                 <Link
                   to={`/artist/${artist._id}`}
-                  className="mt-6 inline-block bg-purple-500 hover:bg-purple-400 text-white py-2 px-6 rounded-lg text-sm font-medium text-center transition-colors duration-200"
+                  className="mt-6 inline-block bg-purple-900 hover:bg-purple-400 text-white py-2 px-6 rounded-lg text-sm font-medium text-center transition-colors duration-200"
                 >
                   View Profile
                 </Link>
