@@ -1,7 +1,9 @@
+//Artist.Booking.controller.js
 import Booking from "../models/Artist.Booking.model.js";
 import Artist from "../models/Artist.model.js";
 import { createNotificationAndEmit } from "../controllers/Notification.controller.js";
-import { statusWeights, contractWeights, getRecencyWeight, calculateBookingScore } from "../utils/bookingPriority.js";
+import { calculateBookingScore } from "../utils/bookingPriority.js";
+import Payment from "../models/Payment.model.js";
 
 
 export const createBooking = async (req, res) => {
@@ -22,13 +24,11 @@ export const createBooking = async (req, res) => {
     } = req.body;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-if (!emailRegex.test(contactEmail)) {
-  return res.status(400).json({ message: "Invalid email address." });
-}
-
+    if (!emailRegex.test(contactEmail)) {
+      return res.status(400).json({ message: "Invalid email address." });
+    }
 
     const clientId = req.user._id;
-
 
     const artistExists = await Artist.findById(artistId);
     if (!artistExists) {
@@ -40,16 +40,12 @@ if (!emailRegex.test(contactEmail)) {
     eventDateStart.setHours(0, 0, 0, 0);
     const eventDateEnd = new Date(eventDate);
     eventDateEnd.setHours(23, 59, 59, 999);
-
-  
+ 
     const existingBookings = await Booking.find({
       artist: artistId,
       eventDate: { $gte: eventDateStart, $lte: eventDateEnd },
       status: { $in: ["accepted", "booked"] },
     });
-
-    const newStart = new Date(startTime);
-    const newEnd = new Date(endTime);
 
     const BUFFER_MINUTES = 30;
     const BUFFER_MS = BUFFER_MINUTES * 60 * 1000;
@@ -87,12 +83,11 @@ if (!emailRegex.test(contactEmail)) {
     await newBooking.save();
 
     await createNotificationAndEmit({
-  userId: artistId,
-  userType: "Artist",
-  type: "booking",
-  message: `New booking request from ${req.user.username || 'a client'}.`,
-});
-
+      userId: artistId,
+      userType: "Artist",
+      type: "booking",
+      message: `New booking request from ${req.user.username || 'a client'}.`,
+    });
 
     res.status(201).json({
       message: "Booking request sent successfully",
@@ -111,7 +106,7 @@ export const getMyBookings = async (req, res) => {
 
     let query;
     if (req.user.role === "client") {
-      query = Booking.find({ client: userId }).populate("artist", "username email phone");
+      query = Booking.find({ client: userId }).populate("artist", "username email phone profilePicture");
     } else if (req.user.role === "artist") {
       query = Booking.find({ artist: userId }).
       populate("client", "username email phone");
@@ -121,6 +116,11 @@ export const getMyBookings = async (req, res) => {
 
     // Execute query without sort for now
     const bookings = await query;
+    const bookingIds = bookings.map((b) => b._id);
+    const payments = await Payment.find({
+      bookingId: { $in: bookingIds },
+      paymentStatus: "paid",
+    }).select("bookingId _id paymentType"); 
 
     let sortedBookings;
 
@@ -149,7 +149,20 @@ export const getMyBookings = async (req, res) => {
       sortedBookings = bookings.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     }
 
-    res.json(sortedBookings);
+    const bookingsWithPayments = sortedBookings.map((booking) => {
+      const relatedPayments = payments
+        .filter((p) => p.bookingId.toString() === booking._id.toString())
+        .map((p) => ({
+          paymentId: p._id,
+          type: p.paymentType,
+        }));
+      return {
+        ...booking.toObject(),
+        payments: relatedPayments,
+      };
+    });
+
+    res.json(bookingsWithPayments);
   } catch (err) {
     console.error("Error fetching bookings:", err);
     res.status(500).json({ error: "Server error while fetching bookings" });
@@ -177,7 +190,7 @@ export const getBookedSlotsForArtist = async (req, res) => {
 export const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate("artist", "username email phone category wage") 
+      .populate("artist", "username email phone category wage profilePicture") 
       .populate("client", "username email phone");
 
     if (!booking) {
@@ -191,11 +204,11 @@ export const getBookingById = async (req, res) => {
     const userIdStr = req.user._id.toString();
 
     if (
-  booking.client._id.toString() !== userIdStr &&
-  booking.artist._id.toString() !== userIdStr
-) {
-  return res.status(403).json({ message: "Access denied to this booking" });
-}
+      booking.client._id.toString() !== userIdStr &&
+      booking.artist._id.toString() !== userIdStr
+    ) {
+      return res.status(403).json({ message: "Access denied to this booking" });
+    }
 
     res.json({ booking });
   } catch (error) {
