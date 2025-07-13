@@ -17,15 +17,16 @@ import {
   Mail,
   Phone,
   Info,
+  ChevronDown, ChevronUp 
 } from "lucide-react";
 
 const statusStyles = {
-  pending: { color: "text-yellow-500", icon: <Clock className="w-5 h-5 mr-1" />, label: "Pending" },
-  accepted: { color: "text-blue-500", icon: <CheckCircle className="w-5 h-5 mr-1" />, label: "Accepted" },
-  booked: { color: "text-green-600", icon: <CheckCircle className="w-5 h-5 mr-1" />, label: "Booked" },
-  completed: { color: "text-gray-500", icon: <Flag className="w-5 h-5 mr-1" />, label: "Completed" },
-  rejected: { color: "text-red-600", icon: <XCircle className="w-5 h-5 mr-1" />, label: "Rejected" },
-  cancelled: { color: "text-red-500", icon: <XCircle className="w-5 h-5 mr-1" />, label: "Cancelled" },
+  pending: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="w-5 h-5 mr-1" />, label: "Pending" },
+  accepted: { color: "bg-blue-100 text-blue-800", icon: <CheckCircle className="w-5 h-5 mr-1" />, label: "Accepted" },
+  booked: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="w-5 h-5 mr-1" />, label: "Booked" },
+  completed: { color: "bg-gray-200 text-gray-800", icon: <Flag className="w-5 h-5 mr-1" />, label: "Completed" },
+  rejected: { color: "bg-red-100 text-red-800", icon: <XCircle className="w-5 h-5 mr-1" />, label: "Rejected" },
+  cancelled: { color: "bg-red-600 text-white", icon: <XCircle className="w-5 h-5 mr-1" />, label: "Cancelled" },
 };
 
 const statusOptions = ["all", "pending", "accepted", "booked", "completed", "rejected", "cancelled"];
@@ -149,11 +150,15 @@ const ArtistBookings = ({ user }) => {
         return (
           <div
             key={booking._id}
-            className="bg-white shadow-md hover:shadow-lg transition rounded-2xl p-6 mb-6"
+            className="bg-white shadow-md hover:shadow-lg transition rounded-2xl p-6 mb-6 border border-gray-100"
           >
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-semibold flex items-center text-indigo-700">
-                <User className="w-6 h-6 mr-2" />
+               <img
+                    src={booking.client.profilePicture?.url || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                    alt={`${bookingName}'s profile`}
+                    className="w-10 h-10 rounded-full mr-2 object-cover"
+                  />
                 {bookingName}
               </h3>
 
@@ -168,7 +173,12 @@ const ArtistBookings = ({ user }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700 mb-4 text-md">
               <div className="flex items-center">
                 <Calendar className="w-5 h-5 mr-2 text-indigo-500" />
-                {new Date(booking.eventDate).toLocaleDateString()}
+                {new Date(booking.eventDate).toLocaleDateString(undefined, {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
               </div>
 
               <div className="flex items-center">
@@ -177,9 +187,11 @@ const ArtistBookings = ({ user }) => {
                   ? `${new Date(booking.startTime).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
+                      hour12: true,
                     })} - ${new Date(booking.endTime).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
+                      hour12: true,
                     })}`
                   : "Time not set"}
               </div>
@@ -217,10 +229,15 @@ const ArtistBookings = ({ user }) => {
             <div className="flex justify-between items-center pt-3">
               <button
                 onClick={() => toggleExpand(booking._id)}
-                className="text-indigo-600 hover:underline text-md font-medium flex items-center mb-4"
+                className="text-md text-indigo-600 hover:underline font-medium flex items-center"
               >
-                <Info className="w-4 h-4 mr-1" />
+                <Info className="w-4 h-4 mr-1" aria-label="More Info" />
                 {expandedBookings[booking._id] ? "Hide Details" : "More"}
+                {expandedBookings[booking._id] ? (
+                  <ChevronUp className="w-4 h-4 ml-1" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 ml-1" />
+                )}
               </button>
 
               {booking.contractUrl && (
@@ -242,6 +259,33 @@ const ArtistBookings = ({ user }) => {
                       View Signed Contract
                     </a>
                   )}
+                  {/* View Payment Buttons */}
+<div className="mt-3 flex gap-2 flex-wrap">
+  {booking.payments?.some(p => p.paymentType === "advance") && (
+    <button
+      onClick={() => {
+        const advancePayment = booking.payments.find(p => p.paymentType === "advance");
+        window.open(`/payments/receipt/${advancePayment._id}`, "_blank");
+      }}
+      className="px-3 py-1.5 rounded bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition"
+    >
+      View Advance Payment
+    </button>
+  )}
+
+  {booking.payments?.some(p => p.paymentType === "final") && (
+    <button
+      onClick={() => {
+        const finalPayment = booking.payments.find(p => p.paymentType === "final");
+        window.open(`/payments/receipt/${finalPayment._id}`, "_blank");
+      }}
+      className="px-3 py-1.5 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
+    >
+      View Final Payment
+    </button>
+  )}
+</div>
+  
                 </div>
               )}
             </div>
@@ -268,13 +312,13 @@ const ArtistBookings = ({ user }) => {
               <div className="mt-5 flex gap-4">
                 <button
                   onClick={() => updateStatus(booking._id, "accepted")}
-                  className="bg-green-500 text-white px-5 py-2 rounded hover:bg-green-600 transition"
+                  className="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-400 transition"
                 >
                   Accept
                 </button>
                 <button
                   onClick={() => updateStatus(booking._id, "rejected")}
-                  className="bg-red-500 text-white px-5 py-2 rounded hover:bg-red-600 transition"
+                  className="bg-red-700 text-white px-5 py-2 rounded hover:bg-red-500 transition"
                 >
                   Reject
                 </button>

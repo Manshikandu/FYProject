@@ -1,7 +1,9 @@
-import { useState } from 'react';
+
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, LogIn, LogOut, User, Bell, CalendarCheck } from 'lucide-react';
 import { useUserStore } from "../stores/useUserStore";
+import NotificationBell from "./NotificationBell";
+import { useState, useEffect } from 'react';
 
 const Navbar = () => {
   const { user, logout } = useUserStore();
@@ -9,6 +11,7 @@ const Navbar = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false); // NEW
 
   const handleLogout = () => {
     logout();
@@ -16,7 +19,7 @@ const Navbar = () => {
     navigate('/');
   };
 
-  const[query, setQuery] = useState('');
+  const [query, setQuery] = useState('');
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && query.trim()) {
@@ -24,14 +27,24 @@ const Navbar = () => {
       setQuery('');
     }
   };
-  
+
+  // Scroll detection hook
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 80); // Adjust threshold as needed
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="fixed top-0 left-0 w-full bg-purple-300 shadow-md z-50 ">
+  <header className={`fixed top-0 left-0 w-full z-50 transition-all text-white duration-300 ${isScrolled ? 'bg-[#000000] shadow-md' : 'bg-transparent'}`}>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-3">
         <nav className="flex items-center justify-between py-4">
           
-          <Link to="/" className="text-2xl font-bold text-black">
+          <Link to="/" className="text-2xl font-bold text-white">
             KalaConnect
           </Link>
 
@@ -84,26 +97,28 @@ const Navbar = () => {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 aria-label="Search"
-                className="pl-10 pr-4 py-1 rounded-md border border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400 w-44 md:w-50 lg:w-80 xl:w-90 2xl:w-128 "
+                className="pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400 w-44 md:w-50 lg:w-80 xl:w-90 2xl:w-128 "
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[purple-500]" size={18} />
             </div>
 
             {/* User Actions */}
             {user ? (
               <div className="relative flex items-center gap-5">
-                <Link
+                {/* <Link
                   to="/notifications"
                   className="relative flex items-center px-3 py-3 rounded-full text-purple-500 hover:text-black transition"
                   aria-label="Notifications"
                 >
                   <Bell />
-                </Link>
+                </Link> */}
+                <NotificationBell user={user} />
+
 
                 {/* New Booking Button */}
                 <button
                   onClick={() => navigate('/my-bookings')}
-                  className="flex items-center px-3 py-3 rounded-full text-black hover:text-purple-500 transition "
+                  className="flex items-center px-3 py-3 rounded-full text-white hover:text-purple-500 transition "
                   aria-label="My Bookings"
                   title="My Bookings"
                 >
@@ -113,7 +128,7 @@ const Navbar = () => {
                 <div className="relative">
                   <button
                     onClick={() => setUserDropdown(!userDropdown)}
-                    className="flex items-center px-3 py-3 rounded-full bg-black hover:bg-purple-500 text-white transition"
+                    className="flex items-center px-3 py-3 rounded-full bg-neutral-500 hover:bg-purple-500 text-white transition"
                     aria-label="User menu"
                   >
                     <User size={18} />
