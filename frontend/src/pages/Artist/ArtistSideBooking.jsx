@@ -5,20 +5,7 @@ import { Link } from "react-router-dom";
 
 import BookingLocationMap from "../../components/BookingLocationMap";
 
-import {
-  CheckCircle,
-  Clock,
-  Calendar,
-  XCircle,
-  User,
-  MapPin,
-  Loader2,
-  Flag,
-  Mail,
-  Phone,
-  Info,
-  ChevronDown, ChevronUp 
-} from "lucide-react";
+import {CheckCircle,Clock, Calendar, XCircle, User, MapPin, Loader2, Flag, Mail, Phone, Info,ChevronDown, ChevronUp } from "lucide-react";
 
 const statusStyles = {
   pending: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="w-5 h-5 mr-1" />, label: "Pending" },
@@ -38,7 +25,6 @@ const sortOptions = [
   { value: "oldest", label: "Sort by: Oldest Created" },
 ];
 
-
 const ArtistBookings = ({ user }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +32,7 @@ const ArtistBookings = ({ user }) => {
  const [sortBy, setSortBy] = useState("recentUpdated");
   const [expandedBookings, setExpandedBookings] = useState({});
   const [mapOpenBookingId, setMapOpenBookingId] = useState(null);
+  const [paymentDropdown, setPaymentDropdown] = useState({});
 
   useEffect(() => {
     fetchBookings();
@@ -54,7 +41,7 @@ const ArtistBookings = ({ user }) => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      let sortOrder = "desc"; // default descending
+      let sortOrder = "desc";
 
       if (sortBy === "oldest") sortOrder = "asc";
       else if (sortBy === "newest") sortOrder = "desc";
@@ -91,6 +78,10 @@ const ArtistBookings = ({ user }) => {
       [id]: !prev[id],
     }));
   };
+
+  const togglePaymentDropdown = (id) => {
+  setPaymentDropdown((prev) => ({ ...prev, [id]: !prev[id] }));
+};
 
   const filteredBookings =
     filterStatus === "all"
@@ -259,33 +250,45 @@ const ArtistBookings = ({ user }) => {
                       View Signed Contract
                     </a>
                   )}
+                  
                   {/* View Payment Buttons */}
-<div className="mt-3 flex gap-2 flex-wrap">
-  {booking.payments?.some(p => p.paymentType === "advance") && (
-    <button
-      onClick={() => {
-        const advancePayment = booking.payments.find(p => p.paymentType === "advance");
-        window.open(`/payments/receipt/${advancePayment._id}`, "_blank");
-      }}
-      className="px-3 py-1.5 rounded bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition"
-    >
-      View Advance Payment
-    </button>
-  )}
-
-  {booking.payments?.some(p => p.paymentType === "final") && (
-    <button
-      onClick={() => {
-        const finalPayment = booking.payments.find(p => p.paymentType === "final");
-        window.open(`/payments/receipt/${finalPayment._id}`, "_blank");
-      }}
-      className="px-3 py-1.5 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
-    >
-      View Final Payment
-    </button>
-  )}
-</div>
-  
+                  {(booking.payments?.some(p => p.paymentType === "advance") ||
+                    booking.payments?.some(p => p.paymentType === "final")) && (
+                    <div className="relative">
+                      <button
+                        onClick={() => togglePaymentDropdown(booking._id)}
+                        className="bg-indigo-600 text-white px-4 py-1.5 rounded hover:bg-indigo-700 flex items-center text-lg font-medium"
+                      >
+                        Payment
+                        {paymentDropdown[booking._id] ? (
+                          <ChevronUp className="w-4 h-4 ml-2" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 ml-2" />
+                        )}
+                      </button>
+                      {paymentDropdown[booking._id] && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                          {booking.payments?.some(p => p.paymentType === "advance") && (
+                            <button
+                              onClick={() => window.open(`/payments/receipt/${booking.payments.find(p => p.paymentType === "advance")?._id}`, "_blank")}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-indigo-100"
+                            >
+                              View Advance Receipt
+                            </button>
+                          )}
+                          <div className="border-t border-gray-200 my-1 mx-2"></div>
+                          {booking.payments?.some(p => p.paymentType === "final") && (
+                            <button
+                              onClick={() => window.open(`/payments/receipt/${booking.payments.find(p => p.paymentType === "final")?._id}`, "_blank")}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-indigo-100"
+                            >
+                              View Final Receipt
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -307,7 +310,6 @@ const ArtistBookings = ({ user }) => {
               </div>
             )}
 
-            {/* Accept/Reject buttons if pending */}
             {booking.status === "pending" && (
               <div className="mt-5 flex gap-4">
                 <button
