@@ -1,10 +1,12 @@
 //Artist.Booking.controller.js
+import mongoose from "mongoose";
 import Booking from "../models/Artist.Booking.model.js";
 import Artist from "../models/Artist.model.js";
 import { createNotificationAndEmit } from "../controllers/Notification.controller.js";
 import { calculateBookingScore } from "../utils/bookingPriority.js";
 import Payment from "../models/Payment.model.js";
 
+// import { refundPayment } from "../utils/paypalRefund.js";
 
 export const createBooking = async (req, res) => {
   try {
@@ -35,64 +37,92 @@ export const createBooking = async (req, res) => {
       return res.status(404).json({ message: "Artist not found" });
     }
 
-//added
-    const eventDateStart = new Date(eventDate);
-    eventDateStart.setHours(0, 0, 0, 0);
-    const eventDateEnd = new Date(eventDate);
-    eventDateEnd.setHours(23, 59, 59, 999);
- 
-    const existingBookings = await Booking.find({
-      artist: artistId,
-      eventDate: { $gte: eventDateStart, $lte: eventDateEnd },
-      status: { $in: ["accepted", "booked"] },
-    });
+    // ENHANCED: Use atomic transaction for race condition prevention
+    const session = await mongoose.startSession();
+    
+    try {
+      const newBooking = await session.withTransaction(async () => {
+        // Mathematical conflict detection with atomic transaction protection
+        const BUFFER_MS = 30 * 60 * 1000; // 30 minutes buffer
+        const newStart = new Date(startTime).getTime();
+        const newEnd = new Date(endTime).getTime();
 
-    const BUFFER_MINUTES = 30;
-    const BUFFER_MS = BUFFER_MINUTES * 60 * 1000;
+        // ATOMIC CONFLICT CHECK: This locks the documents during transaction
+        const conflictingBooking = await Booking.findOne({
+          artist: artistId,
+          status: { $in: ['accepted', 'booked'] },
+          // Mathematical time overlap detection
+          $or: [
+            {
+              // Case 1: New booking starts during existing booking (with buffer)
+              startTime: { $lte: new Date(newEnd) },
+              endTime: { $gt: new Date(newStart - BUFFER_MS) }
+            },
+            {
+              // Case 2: New booking ends during existing booking (with buffer)
+              startTime: { $lt: new Date(newEnd + BUFFER_MS) },
+              endTime: { $gte: new Date(newStart) }
+            },
+            {
+              // Case 3: Existing booking is completely within new booking (with buffer)
+              startTime: { $gte: new Date(newStart - BUFFER_MS) },
+              endTime: { $lte: new Date(newEnd + BUFFER_MS) }
+            }
+          ]
+        }).session(session);
 
-    const isConflict = existingBookings.some(booking => {
-      const existingStart = new Date(booking.startTime).getTime() - BUFFER_MS;
-      const existingEnd = new Date(booking.endTime).getTime() + BUFFER_MS;
-      const newStartTime = new Date(startTime).getTime();
-      const newEndTime = new Date(endTime).getTime();
+        if (conflictingBooking) {
+          throw new Error("Booking conflict: The selected time slot conflicts with an existing booking.");
+        }
 
-      return Math.max(existingStart, newStartTime) < Math.min(existingEnd, newEndTime);
-    });
+        // ATOMIC BOOKING CREATION: Only happens if no conflicts found
+        const booking = new Booking({
+          client: clientId,
+          artist: artistId,
+          eventDate,
+          startTime,
+          endTime,
+          location,
+          coordinates,
+          contactName,
+          contactEmail,
+          contactPhone,
+          eventType,
+          eventDetails,
+          notes,
+          status: "pending",
+        });
 
-    if (isConflict) {
-      return res.status(409).json({ message: "Booking conflict: The selected time slot is already booked." });
+        await booking.save({ session });
+        return booking;
+      });
+
+      await session.endSession();
+
+      await createNotificationAndEmit({
+        userId: artistId,
+        userType: "Artist",
+        type: "booking",
+        message: `New booking request from ${req.user.username || 'a client'}.`,
+      });
+
+      res.status(201).json({
+        message: "Booking request sent successfully",
+        booking: newBooking,
+      });
+
+    } catch (transactionError) {
+      await session.endSession();
+      
+      if (transactionError.message.includes("Booking conflict")) {
+        return res.status(409).json({ 
+          message: transactionError.message,
+          type: "CONFLICT_ERROR"
+        });
+      }
+      
+      throw transactionError; // Re-throw for main catch block
     }
-
-    const newBooking = new Booking({
-      client: clientId,
-      artist: artistId,
-      eventDate,
-      startTime,
-      endTime,
-      location,
-      coordinates,
-      contactName,
-      contactEmail,
-      contactPhone,
-      eventType,
-      eventDetails,
-      notes,
-      status: "pending",
-    });
-
-    await newBooking.save();
-
-    await createNotificationAndEmit({
-      userId: artistId,
-      userType: "Artist",
-      type: "booking",
-      message: `New booking request from ${req.user.username || 'a client'}.`,
-    });
-
-    res.status(201).json({
-      message: "Booking request sent successfully",
-      booking: newBooking,
-    });
   } catch (error) {
     console.error("Create booking error:", error);
     res.status(500).json({ message: "Server error while creating booking" });
@@ -217,4 +247,96 @@ export const getBookingById = async (req, res) => {
   }
 };
 
+export const requestCancellationByClient = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const userId = req.user.id;
 
+    const booking = await Booking.findById(bookingId)
+      .populate("client", "username email")
+      .populate("artist", "username email");
+
+    if (!booking) return res.status(404).json({ message: "Booking not found." });
+
+    if (booking.client._id.toString() !== userId) {
+      return res.status(403).json({ message: "You can only request cancellation for your own bookings." });
+    }
+      console.log("Current booking status:", booking.status);
+
+    if (["cancelled", "completed", "cancellation_requested_by_client", "cancellation_requested_by_artist"].includes(booking.status)) {
+      return res.status(400).json({ message: `Cannot request cancellation for a booking with status ${booking.status}.` });
+    }
+
+    booking.status = "cancellation_requested_by_client"; // New status indicating client requested cancellation
+    booking.cancelledBy = "client";
+
+    await booking.save();
+
+    // Notify artist about cancellation request
+    await createNotificationAndEmit({
+      userId: booking.artist._id,
+      userType: "Artist",
+      type: "booking_cancellation_request",
+      message: `Client ${booking.client.username} has requested cancellation for booking on ${booking.eventDate.toDateString()}. Please respond.`,
+      bookingId: booking._id.toString(),
+    });
+
+    return res.status(200).json({ message: "Cancellation request sent to artist." });
+  } catch (err) {
+    console.error("Client cancellation request error:", err);
+    return res.status(500).json({ message: "Server error." });
+  }
+};
+
+
+export const approveArtistCancellationByClient = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const userId = req.user.id; // client ID
+
+    const booking = await Booking.findById(bookingId)
+      .populate("client")
+      .populate("artist");
+
+    if (!booking) return res.status(404).json({ message: "Booking not found." });
+
+    if (booking.client._id.toString() !== userId) {
+      return res.status(403).json({ message: "You can only approve cancellations for your own bookings." });
+    }
+
+    if (booking.status !== "cancellation_requested_by_artist") {
+      return res.status(400).json({ message: "No artist cancellation request pending for approval." });
+    }
+
+    booking.status = "cancelled";
+
+    // Update payment statuses
+    const payments = await Payment.find({ bookingId: booking._id, paymentStatus: "paid" });
+    for (const payment of payments) {
+      payment.paymentStatus = "refunded"; // or "unpaid" if refund is offline
+      await payment.save();
+    }
+
+    await booking.save();
+
+    // Notify both parties
+    await createNotificationAndEmit({
+      userId: booking.client._id,
+      userType: "Client",
+      type: "booking",
+      message: `You approved the artist's cancellation request for booking on ${booking.eventDate.toDateString()}.`,
+    });
+
+    await createNotificationAndEmit({
+      userId: booking.artist._id,
+      userType: "Artist",
+      type: "booking",
+      message: `Your cancellation request for booking on ${booking.eventDate.toDateString()} was approved by the client.`,
+    });
+
+    return res.status(200).json({ message: "Artist cancellation approved and booking cancelled." });
+  } catch (err) {
+    console.error("Client approval error:", err);
+    return res.status(500).json({ message: "Server error." });
+  }
+};

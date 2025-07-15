@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import paypal from "../utils/paypal.js";
 import Payment from "../models/Payment.model.js";
 import Booking from "../models/Artist.Booking.model.js";
@@ -131,17 +132,35 @@ export const capturePaypalPayment = async (req, res) => {
         booking.payments.push(paymentRecord._id);
       }
 
-      // Update booking according to payment type
-      if (paymentType === "advance") {
-        booking.isPaid = true; 
-        booking.status = "booked"; 
-      } else if (paymentType === "final") {
-        booking.isFinalPaid = true;
-        booking.status = "completed";
-      }
+      // Update booking with atomic transaction protection
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          // Reload booking within transaction to ensure we have latest state
+          const latestBooking = await Booking.findById(booking._id).session(session);
+          
+          if (paymentType === "advance") {
+            latestBooking.isPaid = true; 
+            latestBooking.status = "booked"; 
+          } else if (paymentType === "final") {
+            latestBooking.isFinalPaid = true;
+            latestBooking.status = "completed";
+          }
 
-      booking.lastActionTime = new Date();
-      await booking.save();
+          latestBooking.lastActionTime = new Date();
+          
+          if (!latestBooking.payments.includes(paymentRecord._id)) {
+            latestBooking.payments.push(paymentRecord._id);
+          }
+          
+          await latestBooking.save({ session });
+        });
+        
+        await session.endSession();
+      } catch (transactionError) {
+        await session.endSession();
+        throw transactionError;
+      }
 
       const clientId = booking.client._id || booking.client;
 
@@ -151,6 +170,8 @@ export const capturePaypalPayment = async (req, res) => {
         userType: "Client",
         type: "payment",
         message: `You ${paymentType} payment for artist ${booking.artist.username} wa successful.`,
+        bookingId: booking._id,
+        paymentId: paymentRecord._id,
       });
 
       // Notify artist
@@ -159,6 +180,8 @@ export const capturePaypalPayment = async (req, res) => {
         userType: "Artist",
         type: "payment",
         message: `You have received a ${paymentType} payment from client ${booking.client.username}.`,
+        bookingId: booking._id,
+        paymentId: paymentRecord._id,
       });
 
       res.clearCookie("paypalBookingInfo");
