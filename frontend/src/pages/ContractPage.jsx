@@ -461,7 +461,6 @@ export default function ContractPreviewPage() {
   const [userRole, setUserRole] = useState(null);
   const [booking, setBooking] = useState(null);
   const [wage, setWage] = useState("");
-  const [contractUrl, setContractUrl] = useState(null);
 
   const [clientSignaturePreview, setClientSignaturePreview] = useState(null);
   const [artistSignaturePreview, setArtistSignaturePreview] = useState(null);
@@ -491,7 +490,6 @@ export default function ContractPreviewPage() {
           setArtistSignature(data.artistSignature);
           setArtistSignaturePreview(data.artistSignature);
         }
-        if (data.contractUrl) setContractUrl(data.contractUrl);
 
         if (data.paymentMethods) setPaymentMethods(data.paymentMethods);
         if (data.technicalReqs) setTechnicalReqs(data.technicalReqs);
@@ -671,7 +669,7 @@ export default function ContractPreviewPage() {
                   onChange={() => togglePayment(method)}
                   disabled={contractLocked || userRole !== "client"}
                 />
-                <span className="capitalize">
+                <span className="capitalize w-32 inline-block">
                   {method === "bankTransfer"
                     ? "Bank Transfer"
                     : method === "other"
@@ -797,7 +795,7 @@ export default function ContractPreviewPage() {
       )}
 
       {/* Contract Link */}
-      {contractUrl && (
+      {/* {contractUrl && (
         <a
           href={`http://localhost:3000${contractUrl}`}
           target="_blank"
@@ -806,7 +804,8 @@ export default function ContractPreviewPage() {
         >
           View Contract PDF
         </a>
-      )}
+      )} */}
+
 
       {/* Show message if contract was rejected */}
       {booking.contractStatus === "rejected" && (
