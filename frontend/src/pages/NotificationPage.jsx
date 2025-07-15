@@ -1,10 +1,13 @@
 // src/pages/NotificationsPage.jsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { ArrowLeft } from "lucide-react";
+import { useUserStore } from "../stores/useUserStore";
 
 const NotificationsPage = () => {
+  const user = useUserStore((state) => state.user);
 
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -13,7 +16,7 @@ const NotificationsPage = () => {
   const limit = 10;
   const navigate = useNavigate();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch(
         `http://localhost:3000/api/notifications?type=${filter}&page=${page}&limit=${limit}`,
@@ -29,7 +32,7 @@ const NotificationsPage = () => {
     } catch (err) {
       console.error("Failed to fetch notifications", err);
     }
-  };
+  }, [filter, page, limit]);
 
   const markAllAsRead = async () => {
     for (let n of notifications.filter((n) => !n.isRead)) {
@@ -43,8 +46,40 @@ const NotificationsPage = () => {
 
   const goToDetails = (note) => {
     if (note.type === "booking") navigate("/my-bookings");
-    else if (note.type === "contract") navigate("/contracts");
-    else if (note.type === "payment") navigate("/payments");
+    else if (note.type === "contract") {
+      // Navigate based on user role
+      if (user?.role === "client") {
+        navigate("/my-bookings");
+      } else if (user?.role === "artist") {
+        navigate("/artist-booking");
+      } else {
+        navigate("/contracts"); // Fallback
+      }
+    }
+    else if (note.type === "payment") {
+      // navigate to booking details
+      if (note.bookingId) {
+        navigate(`/booking/${note.bookingId}`);
+      } else {
+        // Fallback to bookings page 
+        navigate("/my-bookings");
+      }
+    }
+    else if (note.type === "review") {
+      // Navigate to reviews or artist profile if artistId is available
+      if (note.artistId) {
+        navigate(`/artist/${note.artistId}`);
+      } else {
+        navigate("/my-bookings"); // Fallback to bookings where reviews might be visible
+      }
+    }
+    else if (note.type === "booking_cancellation_request" || note.type === "booking_cancellation_approval") {
+      if (note.bookingId) {
+        navigate(`/booking/${note.bookingId}`);
+      } else {
+        navigate("/my-bookings");
+      }
+    }
   };
 
   useEffect(() => {
@@ -53,10 +88,18 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     fetchNotifications();
-  }, [page, filter]);
+  }, [fetchNotifications]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
+      {/* Back Button */}
+      <button 
+        onClick={() => navigate(-1)} 
+        className="mb-4 flex items-center text-purple-600 hover:text-black transition-colors bg-purple-200 p-2 rounded font-semibold"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" /> Back
+      </button>
+
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Notifications</h1>
         <button
@@ -68,7 +111,7 @@ const NotificationsPage = () => {
       </div>
 
       <div className="flex gap-3 mb-4">
-        {["all", "booking", "contract", "payment"].map((type) => (
+        {["all", "booking", "contract", "payment", "review", "cancellation"].map((type) => (
           <button
             key={type}
             onClick={() => setFilter(type)}
