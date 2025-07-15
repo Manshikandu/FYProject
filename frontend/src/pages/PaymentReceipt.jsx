@@ -1,13 +1,25 @@
-// pages/PaymentReceipt.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../lib/axios";
 import { ArrowLeft } from "lucide-react";
 
 const PaymentReceipt = () => {
-  const { id } = useParams(); // paymentId
+  const { id } = useParams(); 
   const navigate = useNavigate();
   const [receipt, setReceipt] = useState(null);
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      const userRole = localStorage.getItem('userRole') || 'client';
+      if (userRole === 'artist') {
+        navigate('/artist/bookings');
+      } else {
+        navigate('/my-bookings');
+      }
+    }
+  };
 
   useEffect(() => {
     axios.get(`/payments/receipt/${id}`)
@@ -29,7 +41,7 @@ const PaymentReceipt = () => {
 
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded shadow">
-      <button onClick={() => navigate(-1)} className="mb-4 flex items-center text-gray-600 hover:text-black">
+      <button onClick={handleGoBack} className="mb-4 flex items-center text-gray-600 hover:text-black">
         <ArrowLeft className="w-4 h-4 mr-1" /> Back
       </button>
 
