@@ -51,7 +51,19 @@ export const getNotifications = async (req, res) => {
       userId: req.user._id,
       // userType: req.user.role,
     };
-    if (type !== "all") query.type = type;
+    
+    // Handle special filter cases
+    if (type !== "all") {
+      if (type === "cancellation") {
+        // For cancellation filter, match both cancellation-related types
+        query.type = { 
+          $in: ["booking_cancellation_request", "booking_cancellation_approval"] 
+        };
+      } else {
+        // For other filters, exact match
+        query.type = type;
+      }
+    }
 
     const total = await Notification.countDocuments(query);
     const notifications = await Notification.find(query)

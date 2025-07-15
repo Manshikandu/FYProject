@@ -29,9 +29,15 @@ const BookingSchema = new mongoose.Schema(
     notes: String,
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected", "booked", "completed", "cancelled"],
+      enum: ["pending", "accepted", "rejected", "booked", "completed", "cancelled",  "cancellation_requested_by_client",
+  "cancellation_requested_by_artist"],
       default: "pending",
     },
+    cancelledBy: {
+      type: String,
+      enum: ["artist", "client", "admin"],
+    },
+
     // Contract related fields
     totalHours: { type: Number },                   
     wage: { type: Number },                         
